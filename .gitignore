@@ -1,0 +1,18 @@
+# Ignored logs and capture files
+logs/
+*.log
+snort.log.*
+alert
+
+# Environment and sensitive data
+.env
+.venv/
+env/
+__pycache__/
+*.py[cod]
+
+# OS files and IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/

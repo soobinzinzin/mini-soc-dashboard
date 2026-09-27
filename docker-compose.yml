@@ -1,0 +1,74 @@
+networks:
+  minisoc-net:
+    driver: bridge
+
+services:
+  attacker:
+    build: ./attacker
+    container_name: attacker
+    networks:
+      - minisoc-net
+    tty: true
+
+  # ---------- Site A: Headquarters ----------
+  victim-hq:
+    build: ./victim
+    container_name: victim-hq
+    networks:
+      - minisoc-net
+    cap_add:
+      - NET_ADMIN
+
+  sensor-hq:
+    build: ./sensor
+    container_name: sensor-hq
+    network_mode: "service:victim-hq"   # sensor "soi" đúng traffic của victim-hq
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ./logs/hq:/var/log/snort
+    depends_on:
+      - victim-hq
+
+  # ---------- Site B: Server Farm ----------
+  victim-serverfarm:
+    build: ./victim
+    container_name: victim-serverfarm
+    networks:
+      - minisoc-net
+    cap_add:
+      - NET_ADMIN
+
+  sensor-serverfarm:
+    build: ./sensor
+    container_name: sensor-serverfarm
+    network_mode: "service:victim-serverfarm"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ./logs/serverfarm:/var/log/snort
+    depends_on:
+      - victim-serverfarm
+
+  # ---------- Site C: Web DMZ ----------
+  victim-dmz:
+    build: ./victim
+    container_name: victim-dmz
+    networks:
+      - minisoc-net
+    cap_add:
+      - NET_ADMIN
+
+  sensor-dmz:
+    build: ./sensor
+    container_name: sensor-dmz
+    network_mode: "service:victim-dmz"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    volumes:
+      - ./logs/dmz:/var/log/snort
+    depends_on:
+      - victim-dmz
