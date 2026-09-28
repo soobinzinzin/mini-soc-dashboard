@@ -1,0 +1,27 @@
+=== BƯỚC 5: ĐO ĐỘ TRỄ CHUYỂN PHÁT TELEMETRY (LATENCY) ===
+Lệnh chạy:
+curl.exe -s http://localhost:8000/api/v1/telemetry?limit=5
+
+Output nguyên văn:
+[{"timestamp":"2026-09-28T03:27:24.354797Z","sensor_id":"sensor-serverfarm","site":"serverfarm","sid":1000003,"gid":1,"rev":2,"signature":"SSH Brute Force Attempt","classification":null,"priority":0,"protocol":"TCP","src_ip":"172.19.0.5","src_port":59764,"dst_ip":"172.19.0.2","dst_port":22,"raw_log":"09/28-03:27:24.354797  [**] [1:1000003:2] SSH Brute Force Attempt [**] [Priority: 0] {TCP} 172.19.0.5:59764 -> 172.19.0.2:22","telemetry_id":"c2775260-628c-449e-bd1a-96ff1f21b5ad","received_at":"2026-09-28T03:27:24.761878Z"},{"timestamp":"2026-09-28T03:26:37.071322Z","sensor_id":"sensor-hq","site":"hq","sid":1000001,"gid":1,"rev":2,"signature":"ICMP Flood Attack Detected","classification":null,"priority":0,"protocol":"ICMP","src_ip":"172.19.0.5","src_port":null,"dst_ip":"172.19.0.4","dst_port":null,"raw_log":"09/28-03:26:37.071322  [**] [1:1000001:2] ICMP Flood Attack Detected [**] [Priority: 0] {ICMP} 172.19.0.5 -> 172.19.0.4","telemetry_id":"e932059c-2e44-4006-bd10-579073f46e18","received_at":"2026-09-28T03:26:38.007178Z"},{"timestamp":"2026-09-28T03:26:09.513372Z","sensor_id":"sensor-dmz","site":"dmz","sid":1000002,"gid":1,"rev":2,"signature":"TCP SYN Port Scan Detected","classification":null,"priority":0,"protocol":"TCP","src_ip":"172.19.0.5","src_port":46207,"dst_ip":"172.19.0.3","dst_port":5,"raw_log":"09/28-03:26:09.513372  [**] [1:1000002:2] TCP SYN Port Scan Detected [**] [Priority: 0] {TCP} 172.19.0.5:46207 -> 172.19.0.3:5","telemetry_id":"3c870368-8ac2-4f1a-a3a6-6d6d7c7c3bc5","received_at":"2026-09-28T03:26:10.057378Z"}]
+
+Chi tiết tính toán độ trễ (received_at - timestamp):
+1. Bản ghi 1 (Site: serverfarm, SID: 1000003 - SSH Brute Force):
+   - Sinh lúc (timestamp): 2026-09-28T03:27:24.354797Z
+   - Nhận lúc (received_at): 2026-09-28T03:27:24.761878Z
+   - Độ trễ: 0.4071 giây
+
+2. Bản ghi 2 (Site: hq, SID: 1000001 - ICMP Flood):
+   - Sinh lúc (timestamp): 2026-09-28T03:26:37.071322Z
+   - Nhận lúc (received_at): 2026-09-28T03:26:38.007178Z
+   - Độ trễ: 0.9359 giây
+
+3. Bản ghi 3 (Site: dmz, SID: 1000002 - TCP SYN Port Scan):
+   - Sinh lúc (timestamp): 2026-09-28T03:26:09.513372Z
+   - Nhận lúc (received_at): 2026-09-28T03:26:10.057378Z
+   - Độ trễ: 0.5440 giây
+
+Báo cáo thống kê:
+- Độ trễ nhỏ nhất (Min Latency): 0.4071 giây
+- Độ trễ lớn nhất (Max Latency): 0.9359 giây
+- Độ trễ trung bình: 0.6290 giây (Toàn bộ dưới 1 giây)

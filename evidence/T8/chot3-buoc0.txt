@@ -1,0 +1,20 @@
+=== BƯỚC 0: GHI SỐ DÒNG HIỆN TẠI VÀ RESET BUFFER API ===
+Lệnh chạy:
+(Get-Content logs\hq\alert | Measure-Object -Line).Lines
+(Get-Content logs\serverfarm\alert | Measure-Object -Line).Lines
+(Get-Content logs\dmz\alert | Measure-Object -Line).Lines
+curl.exe -s -X DELETE http://localhost:8000/api/v1/telemetry
+curl.exe -s http://localhost:8000/api/v1/telemetry/stats
+
+Output nguyên văn:
+391
+4
+4
+{"status":"success","cleared_records":0}
+{"total_received":0,"by_site":{},"by_signature":{},"by_protocol":{}}
+
+Kết luận:
+- logs/hq/alert mốc ban đầu: 391 dòng
+- logs/serverfarm/alert mốc ban đầu: 4 dòng
+- logs/dmz/alert mốc ban đầu: 4 dòng
+- total_received = 0 (Xác nhận reset thành công)

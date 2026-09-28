@@ -1,0 +1,21 @@
+=== BƯỚC 4: ĐỐI CHIẾU CHÍNH XÁC TELEMETRY ===
+Lệnh chạy:
+(Get-Content logs\hq\alert | Measure-Object -Line).Lines
+(Get-Content logs\serverfarm\alert | Measure-Object -Line).Lines
+(Get-Content logs\dmz\alert | Measure-Object -Line).Lines
+curl.exe -s http://localhost:8000/api/v1/telemetry/stats
+
+Output nguyên văn:
+392
+5
+5
+{"total_received":3,"by_site":{"dmz":1,"hq":1,"serverfarm":1},"by_signature":{"TCP SYN Port Scan Detected":1,"ICMP Flood Attack Detected":1,"SSH Brute Force Attempt":1},"by_protocol":{"TCP":2,"ICMP":1}}
+
+Bảng đối chiếu chi tiết:
+| Site | Mốc B0 | Hiện tại | Dòng mới trong file | Bản ghi tại API (by_site) | Kết luận |
+|---|---|---|---|---|---|
+| dmz | 4 | 5 | 1 | 1 | PASS |
+| hq | 391 | 392 | 1 | 1 | PASS |
+| serverfarm | 4 | 5 | 1 | 1 | PASS |
+
+Tổng: 3 dòng alert mới sinh ra == 3 bản ghi tiếp nhận tại API (Không thừa, không thiếu, không trùng).

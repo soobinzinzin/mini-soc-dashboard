@@ -1,0 +1,16 @@
+=== BƯỚC 1: NMAP SYN PORT SCAN VÀO VICTIM-DMZ ===
+Lệnh chạy:
+docker exec attacker nmap -sS -p 1-100 victim-dmz; Start-Sleep -Seconds 10
+
+Output nguyên văn:
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-09-28 03:26 +0000
+Nmap scan report for victim-dmz (172.19.0.3)
+Host is up (0.0000070s latency).
+rDNS record for 172.19.0.3: victim-dmz.mini-soc-lab-v2_minisoc-net
+Not shown: 98 closed tcp ports (reset)
+PORT   STATE SERVICE
+22/tcp open  ssh
+80/tcp open  http
+MAC Address: 66:15:A9:96:EE:8F (Unknown)
+
+Nmap done: 1 IP address (1 host up) scanned in 0.17 seconds

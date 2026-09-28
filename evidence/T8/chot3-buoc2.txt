@@ -1,0 +1,10 @@
+=== BƯỚC 2: ICMP FLOOD VÀO VICTIM-HQ ===
+Lệnh chạy:
+docker exec attacker ping -f -c 200 victim-hq; Start-Sleep -Seconds 10
+
+Output nguyên văn:
+PING victim-hq (172.19.0.4) 56(84) bytes of data.
+.   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   
+--- victim-hq ping statistics ---
+200 packets transmitted, 200 received, 0% packet loss, time 1ms
+rtt min/avg/max/mdev = 0.005/0.006/0.097/0.006 ms, ipg/ewma 0.007/0.006 ms

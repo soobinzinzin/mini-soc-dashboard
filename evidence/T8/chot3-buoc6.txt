@@ -1,0 +1,42 @@
+=== BƯỚC 6: KIỂM THỬ KHẢ NĂNG CHỊU LỖI (FAULT TOLERANCE) ===
+Lệnh chạy:
+docker compose stop soc-central
+docker exec attacker ping -f -c 200 victim-hq
+Start-Sleep -Seconds 15
+docker logs agent-hq --tail 5
+docker compose start soc-central
+Start-Sleep -Seconds 45
+(Get-Content logs\hq\alert | Measure-Object -Line).Lines
+curl.exe -s http://localhost:8000/api/v1/telemetry/stats
+docker logs agent-hq --tail 5
+
+Output nguyên văn:
+Container soc-central Stopping
+Container soc-central Stopped
+PING victim-hq (172.19.0.4) 56(84) bytes of data.
+--- victim-hq ping statistics ---
+200 packets transmitted, 200 received, 0% packet loss, time 4ms
+
+Log agent-hq khi soc-central đang dừng:
+2026-09-28 03:30:04 [WARNING] [ShipperAgent] Network error reaching http://soc-central:8000/api/v1/telemetry: <urlopen error [Errno -3] Temporary failure in name resolution>. Will retry.
+2026-09-28 03:30:04 [WARNING] [ShipperAgent] Delivery failed for SID 1000001. Retrying in 2.0s...
+2026-09-28 03:30:14 [WARNING] [ShipperAgent] Network error reaching http://soc-central:8000/api/v1/telemetry: <urlopen error [Errno -3] Temporary failure in name resolution>. Will retry.
+2026-09-28 03:30:14 [WARNING] [ShipperAgent] Delivery failed for SID 1000001. Retrying in 4.0s...
+2026-09-28 03:30:26 [WARNING] [ShipperAgent] Network error reaching http://soc-central:8000/api/v1/telemetry: <urlopen error [Errno -3] Temporary failure in name resolution>. Will retry.
+2026-09-28 03:30:26 [WARNING] [ShipperAgent] Delivery failed for SID 1000001. Retrying in 8.0s...
+
+Sau khi soc-central khởi động lại:
+Container soc-central Starting
+Container soc-central Started
+2026-09-28 03:30:34 [INFO] [ShipperAgent] Forwarded alert [SID:1000001] 'ICMP Flood Attack Detected' from 172.19.0.5 to 172.19.0.4
+
+Số dòng alert tại logs/hq/alert:
+393 (Tăng 1 dòng so với mốc 392 của Bước 4)
+
+Kết quả API stats sau khi phục hồi:
+{"total_received":1,"by_site":{"hq":1},"by_signature":{"ICMP Flood Attack Detected":1},"by_protocol":{"ICMP":1}}
+
+Kết luận:
+- Dòng mới sinh ra trong file khi API chết: 1 dòng
+- Bản ghi nhận được sau khi API sống lại: 1 bản ghi
+- Trạng thái: PASS (Agent retry thành công với exponential backoff 2s -> 4s -> 8s, không mất mát, không trùng lặp).

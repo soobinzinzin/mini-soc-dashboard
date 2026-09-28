@@ -1,0 +1,6 @@
+=== Output kiem thu bien dich ma nguon central/ (schemas.py, main.py) ===
+Lenh chay: docker cp C:\Users\taiph\mini-soc-lab-v2\central victim-hq:/tmp/central; docker exec victim-hq python3 -m py_compile /tmp/central/schemas.py /tmp/central/main.py
+
+Output:
+Exit code: 0
+Khong co loi cu phap nao.

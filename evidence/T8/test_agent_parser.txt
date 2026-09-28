@@ -1,0 +1,10 @@
+=== Output kiem thu test_agent.py (5 test cases) ===
+Lenh chay: docker cp C:\Users\taiph\mini-soc-lab-v2\agent victim-hq:/tmp/agent; docker exec victim-hq python3 /tmp/agent/test_agent.py
+
+Output:
+2026-09-28 02:53:26 [WARNING] [ShipperAgent] Could not parse alert line: random unformatted log text
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.002s
+
+OK

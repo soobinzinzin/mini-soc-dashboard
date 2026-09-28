@@ -1,0 +1,28 @@
+=== BƯỚC 7: KIỂM THỬ KHÔNG GỬI TRÙNG KHI RESTART AGENT ===
+Lệnh chạy:
+curl.exe -s http://localhost:8000/api/v1/telemetry/stats
+docker restart agent-hq
+Start-Sleep -Seconds 10
+curl.exe -s http://localhost:8000/api/v1/telemetry/stats
+docker logs agent-hq
+
+Output nguyên văn:
+Trước restart:
+{"total_received":1,"by_site":{"hq":1},"by_signature":{"ICMP Flood Attack Detected":1},"by_protocol":{"ICMP":1}}
+
+Lệnh restart:
+agent-hq
+
+Sau restart (10s):
+{"total_received":1,"by_site":{"hq":1},"by_signature":{"ICMP Flood Attack Detected":1},"by_protocol":{"ICMP":1}}
+
+Log của agent-hq sau restart:
+2026-09-28 03:31:24 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-09-28 03:31:24 [INFO] [ShipperAgent] Monitoring file: /var/log/snort/alert
+2026-09-28 03:31:24 [INFO] [ShipperAgent] Target Ingestion URL: http://soc-central:8000/api/v1/telemetry
+2026-09-28 03:31:24 [INFO] [ShipperAgent] Found alert file: /var/log/snort/alert. Attaching tail stream.
+
+Kết luận:
+- total_received trước: 1 -> sau: 1 (Không tăng, không gửi trùng lặp).
+- Log không có dòng "rotated or truncated" (Inode và file size ổn định tuyệt đối trên Windows mount).
+- Trạng thái: PASS.

@@ -1,0 +1,1 @@
+# No external dependencies - Shipper Agent relies exclusively on Python standard library (urllib, re, json, datetime)

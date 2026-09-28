@@ -1,0 +1,24 @@
+=== Output kiem thu day du test_agent.py (10 test cases) ===
+Lenh chay: docker run --rm -v C:\Users\taiph\mini-soc-lab-v2\agent:/app -w /app python:3.11-slim python test_agent.py
+
+Output:
+2026-09-28 03:11:57 [WARNING] [ShipperAgent] Could not parse alert line: random unformatted log text
+.....2026-09-28 03:11:57 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-09-28 03:11:57 [INFO] [ShipperAgent] Monitoring file: /tmp/tmpej3uynip
+2026-09-28 03:11:57 [INFO] [ShipperAgent] Target Ingestion URL: http://mock-api/telemetry
+2026-09-28 03:11:57 [INFO] [ShipperAgent] Found alert file: /tmp/tmpej3uynip. Attaching tail stream.
+2026-09-28 03:11:57 [INFO] [ShipperAgent] Alert file rotated or truncated. Re-opening...
+.2026-09-28 03:11:57 [ERROR] [ShipperAgent] HTTP 422 Client Error (Unprocessable Entity). Dropping alert. Raw log: test raw log line
+2026-09-28 03:11:57 [WARNING] [ShipperAgent] Alert dropped for SID 1000001 due to client error (HTTP 4xx).
+.2026-09-28 03:11:57 [WARNING] [ShipperAgent] HTTP 500 Server Error (Internal Server Error). Will retry.
+2026-09-28 03:11:57 [WARNING] [ShipperAgent] Delivery failed for SID 1000002. Retrying in 0.0s...
+2026-09-28 03:11:58 [INFO] [ShipperAgent] Forwarded alert [SID:1000002] 'Test Scan' from 10.0.0.1 to 10.0.0.2
+.2026-09-28 03:11:58 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-09-28 03:11:58 [INFO] [ShipperAgent] Monitoring file: /tmp/tmp_bmr_mrc
+2026-09-28 03:11:58 [INFO] [ShipperAgent] Target Ingestion URL: http://mock-api/telemetry
+2026-09-28 03:11:58 [INFO] [ShipperAgent] Found alert file: /tmp/tmp_bmr_mrc. Attaching tail stream.
+..
+----------------------------------------------------------------------
+Ran 10 tests in 0.370s
+
+OK

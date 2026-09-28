@@ -72,3 +72,62 @@ services:
       - ./logs/dmz:/var/log/snort
     depends_on:
       - victim-dmz
+
+  # ---------- Central Ingestion API ----------
+  soc-central:
+    build: ./central
+    container_name: soc-central
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - minisoc-net
+    restart: unless-stopped
+
+  # ---------- Telemetry Forwarding Agents ----------
+  agent-hq:
+    build: ./agent
+    container_name: agent-hq
+    networks:
+      - minisoc-net
+    environment:
+      - INGESTION_URL=http://soc-central:8000/api/v1/telemetry
+      - SENSOR_ID=sensor-hq
+      - SENSOR_SITE=hq
+      - ALERT_FILE=/var/log/snort/alert
+    volumes:
+      - ./logs/hq:/var/log/snort:ro
+    depends_on:
+      - soc-central
+    restart: unless-stopped
+
+  agent-serverfarm:
+    build: ./agent
+    container_name: agent-serverfarm
+    networks:
+      - minisoc-net
+    environment:
+      - INGESTION_URL=http://soc-central:8000/api/v1/telemetry
+      - SENSOR_ID=sensor-serverfarm
+      - SENSOR_SITE=serverfarm
+      - ALERT_FILE=/var/log/snort/alert
+    volumes:
+      - ./logs/serverfarm:/var/log/snort:ro
+    depends_on:
+      - soc-central
+    restart: unless-stopped
+
+  agent-dmz:
+    build: ./agent
+    container_name: agent-dmz
+    networks:
+      - minisoc-net
+    environment:
+      - INGESTION_URL=http://soc-central:8000/api/v1/telemetry
+      - SENSOR_ID=sensor-dmz
+      - SENSOR_SITE=dmz
+      - ALERT_FILE=/var/log/snort/alert
+    volumes:
+      - ./logs/dmz:/var/log/snort:ro
+    depends_on:
+      - soc-central
+    restart: unless-stopped
