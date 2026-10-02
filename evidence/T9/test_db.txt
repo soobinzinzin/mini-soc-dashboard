@@ -1,0 +1,27 @@
+2026-10-01 01:08:10 [INFO] [IngestionAPI] Initialized SQLite database at :memory:
+test_01_check_connection (__main__.TestCentralDatabase.test_01_check_connection)
+Verify check_connection returns True for healthy database. ... ok
+test_02_upsert_sensor (__main__.TestCentralDatabase.test_02_upsert_sensor)
+Verify upsert_sensor inserts new sensor and updates last_seen on conflict. ... ok
+test_03_insert_raw_alert_and_query (__main__.TestCentralDatabase.test_03_insert_raw_alert_and_query)
+Verify inserting 1 alert and querying it back preserves all fields. ... ok
+test_04_duplicate_telemetry_id_not_inserted (__main__.TestCentralDatabase.test_04_duplicate_telemetry_id_not_inserted)
+Verify inserting duplicate telemetry_id does NOT increase row count (idempotence). ... ok
+test_05_stats_aggregation (__main__.TestCentralDatabase.test_05_stats_aggregation)
+Verify get_stats computes total_received, by_site, by_signature, and by_protocol. ... ok
+test_06_truncate_raw_alerts (__main__.TestCentralDatabase.test_06_truncate_raw_alerts)
+Verify truncate_raw_alerts clears all alerts and returns count. ... ok
+test_07_main_api_flow (__main__.TestCentralDatabase.test_07_main_api_flow)
+Verify main.py endpoints: health_check, ingest_telemetry, list_telemetry, clear_telemetry. ... 2026-10-01 01:08:10 [INFO] [IngestionAPI] INGESTED TELEMETRY [HQ] - SID:1000002 'TCP SYN Port Scan Detected' | TCP 172.22.0.2:44343 -> 172.22.0.3:11
+2026-10-01 01:08:10 [WARNING] [IngestionAPI] DANGEROUS OPERATION: Truncating raw_alerts table via DELETE /api/v1/telemetry
+2026-10-01 01:08:10 [INFO] [IngestionAPI] Cleared 1 telemetry records from PostgreSQL.
+ok
+test_08_ingest_telemetry_deduplication_same_telemetry_id (__main__.TestCentralDatabase.test_08_ingest_telemetry_deduplication_same_telemetry_id)
+Verify calling ingest_telemetry twice with identical telemetry_id results in exactly 1 row in raw_alerts. ... 2026-10-01 01:08:10 [INFO] [IngestionAPI] INGESTED TELEMETRY [HQ] - SID:1000001 'ICMP Flood Attack Detected' | ICMP 172.22.0.2:* -> 172.22.0.3:*
+2026-10-01 01:08:10 [WARNING] [IngestionAPI] Duplicate alert skipped: telemetry_id=test-dedup-uuid-12345
+ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.007s
+
+OK

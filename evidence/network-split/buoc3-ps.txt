@@ -1,0 +1,12 @@
+NAME                IMAGE                               COMMAND                  SERVICE             CREATED         STATUS         PORTS
+agent-dmz           mini-soc-lab-v2-agent-dmz           "python agent.py"        agent-dmz           9 seconds ago   Up 7 seconds   
+agent-hq            mini-soc-lab-v2-agent-hq            "python agent.py"        agent-hq            9 seconds ago   Up 7 seconds   
+agent-serverfarm    mini-soc-lab-v2-agent-serverfarm    "python agent.py"        agent-serverfarm    9 seconds ago   Up 7 seconds   
+attacker            mini-soc-lab-v2-attacker            "sleep infinity"         attacker            9 seconds ago   Up 8 seconds   
+sensor-dmz          mini-soc-lab-v2-sensor-dmz          "snort -q -k none -câ€¦"   sensor-dmz          9 seconds ago   Up 7 seconds   
+sensor-hq           mini-soc-lab-v2-sensor-hq           "snort -q -k none -câ€¦"   sensor-hq           9 seconds ago   Up 7 seconds   
+sensor-serverfarm   mini-soc-lab-v2-sensor-serverfarm   "snort -q -k none -câ€¦"   sensor-serverfarm   9 seconds ago   Up 7 seconds   
+soc-central         mini-soc-lab-v2-soc-central         "uvicorn main:app --â€¦"   soc-central         9 seconds ago   Up 8 seconds   127.0.0.1:8000->8000/tcp
+victim-dmz          mini-soc-lab-v2-victim-dmz          "/bin/sh -c 'serviceâ€¦"   victim-dmz          9 seconds ago   Up 8 seconds   22/tcp, 80/tcp
+victim-hq           mini-soc-lab-v2-victim-hq           "/bin/sh -c 'serviceâ€¦"   victim-hq           9 seconds ago   Up 8 seconds   22/tcp, 80/tcp
+victim-serverfarm   mini-soc-lab-v2-victim-serverfarm   "/bin/sh -c 'serviceâ€¦"   victim-serverfarm   9 seconds ago   Up 8 seconds   22/tcp, 80/tcp

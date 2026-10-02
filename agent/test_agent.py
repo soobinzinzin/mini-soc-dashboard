@@ -80,6 +80,23 @@ class TestSnortAlertParser(unittest.TestCase):
         self.assertIsNone(parse_snort_alert(""))
         self.assertIsNone(parse_snort_alert("random unformatted log text"))
 
+    def test_deterministic_telemetry_id(self):
+        """Calling parse_snort_alert twice with same input returns identical telemetry_id."""
+        line = "09/27-15:32:10.613847  [**] [1:1000001:2] ICMP Flood Attack Detected [**] [Priority: 0] {ICMP} 172.19.0.2 -> 172.19.0.3"
+        payload1 = parse_snort_alert(line, sensor_id="sensor-hq", site="hq")
+        payload2 = parse_snort_alert(line, sensor_id="sensor-hq", site="hq")
+        self.assertIsNotNone(payload1)
+        self.assertIsNotNone(payload2)
+        self.assertIn("telemetry_id", payload1)
+        self.assertEqual(payload1["telemetry_id"], payload2["telemetry_id"])
+
+        # Different line or different sensor produces different telemetry_id
+        line_diff = "09/27-15:32:10.551967  [**] [1:1000002:2] TCP SYN Port Scan Detected [**] [Priority: 0] {TCP} 172.19.0.2:33561 -> 172.19.0.3:66"
+        payload3 = parse_snort_alert(line_diff, sensor_id="sensor-hq", site="hq")
+        payload4 = parse_snort_alert(line, sensor_id="sensor-dmz", site="dmz")
+        self.assertNotEqual(payload1["telemetry_id"], payload3["telemetry_id"])
+        self.assertNotEqual(payload1["telemetry_id"], payload4["telemetry_id"])
+
 
 class TestTimestampAndMockHttp(unittest.TestCase):
     """New Required Tests for Chot 2"""

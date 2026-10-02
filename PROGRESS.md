@@ -566,3 +566,975 @@ Chốt 3 đạt ở quy mô nhỏ, cần test khối lượng lớn hơn (tối 
 
 ### K. Bước tiếp theo đề xuất (không tự làm)
 Chờ bạn phê duyệt báo cáo Chốt 3, sau đó cho phép commit/push code Tuần 8 lên GitHub và chuyển sang **Tuần 9: Database PostgreSQL + Triage Engine (Correlation Rules)**.
+
+---
+
+## Báo cáo Kiểm thử: Tách mạng riêng cho từng site và Script traffic giả lập (Tạm dừng tại Bước 6)
+Giờ hệ thống: 2026-09-30T09:15:00+07:00
+
+### A. Trạng thái từng việc
+| Việc | Mô tả | Trạng thái | Ghi chú |
+|---|---|---|---|
+| **Việc 1** | Tách mạng riêng cho từng site (`net-hq`, `net-serverfarm`, `net-dmz`, `net-central`) | **IN_PROGRESS** | Đã cấu hình và kiểm chứng 4 network, attacker ping thông 3 victim ở Bước 5; dừng tại Bước 6 do container `agent-hq` thiếu binary `ping`. |
+| **Việc 2** | Script traffic giả lập demo (`attacker/demo_traffic.sh` + Dockerfile) | **IN_PROGRESS** | Đã tạo script chuẩn LF, cập nhật `attacker/Dockerfile`, build vào image `attacker`; chưa chạy Bước 7 do dừng kiểm thử tại Bước 6. |
+
+---
+
+### B. File đã tạo hoặc sửa
+| Đường dẫn | Tạo mới / Sửa | Số dòng (Total / Non-empty) | Mô tả |
+|---|---|---|---|
+| `docker-compose.yml` | Sửa | 141 / 130 | Khai báo 4 bridge network, gán đúng mạng cho attacker, 3 victim và soc-central + 3 agent |
+| `attacker/Dockerfile` | Sửa | 8 / 7 | Thêm `COPY demo_traffic.sh /root/` và `RUN chmod +x /root/demo_traffic.sh` |
+| `attacker/demo_traffic.sh` | Tạo mới | 10 / 10 | Script tuần tự kích hoạt 3 kịch bản tấn công kèm thông báo echo và sleep 8s, định dạng LF |
+| `evidence/network-split/buoc1-down.txt` | Tạo mới | 44 / 44 | Output thực tế lệnh `docker compose down` |
+| `evidence/network-split/buoc2-build-up.txt` | Tạo mới | 282 / 222 | Output thực tế lệnh `docker compose up -d --build` |
+| `evidence/network-split/buoc3-ps.txt` | Tạo mới | 12 / 12 | Output thực tế lệnh `docker compose ps` (11 container Up) |
+| `evidence/network-split/buoc4-networks.txt` | Tạo mới | 9 / 9 | Output thực tế lệnh `docker network ls` xác nhận 4 mạng |
+| `evidence/network-split/buoc5-ping-victims.txt` | Tạo mới | 8 / 6 | Output thực tế attacker ping thành công 3 victim |
+| `evidence/network-split/buoc6-ping-soc-central.txt` | Tạo mới | 1 / 1 | Output thực tế lỗi thiếu binary `ping` trên `agent-hq` |
+
+---
+
+### C. Lệnh đã chạy và output thật
+
+#### Bước 1: `docker compose down`
+```text
+ Container sensor-serverfarm Stopping 
+ Container sensor-hq Stopping 
+ Container agent-hq Stopping 
+ Container agent-serverfarm Stopping 
+ Container sensor-dmz Stopping 
+ Container attacker Stopping 
+ Container agent-dmz Stopping 
+ Container agent-hq Stopped 
+ Container agent-hq Removing 
+ Container sensor-dmz Stopped 
+ Container sensor-dmz Removing 
+ Container sensor-serverfarm Stopped 
+ Container sensor-serverfarm Removing 
+ Container sensor-hq Stopped 
+ Container sensor-hq Removing 
+ Container agent-serverfarm Stopped 
+ Container agent-serverfarm Removing 
+ Container attacker Stopped 
+ Container attacker Removing 
+ Container agent-dmz Stopped 
+ Container agent-dmz Removing 
+ Container agent-hq Removed 
+ Container sensor-dmz Removed 
+ Container victim-dmz Stopping 
+ Container sensor-hq Removed 
+ Container victim-hq Stopping 
+ Container agent-dmz Removed 
+ Container agent-serverfarm Removed 
+ Container soc-central Stopping 
+ Container attacker Removed 
+ Container victim-dmz Stopped 
+ Container victim-dmz Removing 
+ Container sensor-serverfarm Removed 
+ Container victim-serverfarm Stopping 
+ Container victim-hq Stopped 
+ Container victim-hq Removing 
+ Container victim-serverfarm Stopped 
+ Container victim-serverfarm Removing 
+ Container soc-central Stopped 
+ Container soc-central Removing 
+ Container victim-dmz Removed 
+ Container soc-central Removed 
+ Container victim-hq Removed 
+ Container victim-serverfarm Removed
+```
+
+#### Bước 2: `docker compose up -d --build`
+```text
+ Network mini-soc-lab-v2_net-hq Creating 
+ Network mini-soc-lab-v2_net-serverfarm Creating 
+ Network mini-soc-lab-v2_net-dmz Creating 
+ Network mini-soc-lab-v2_net-central Creating 
+ Network mini-soc-lab-v2_net-serverfarm Created 
+ Container victim-serverfarm Creating 
+ Network mini-soc-lab-v2_net-dmz Created 
+ Container victim-dmz Creating 
+ Network mini-soc-lab-v2_net-central Created 
+ Container soc-central Creating 
+ Container victim-serverfarm Created 
+ Container sensor-serverfarm Creating 
+ Network mini-soc-lab-v2_net-hq Created 
+ Container victim-hq Creating 
+ Container attacker Creating 
+ Container victim-dmz Created 
+ Container sensor-dmz Creating 
+ Container soc-central Created 
+ Container agent-hq Creating 
+ Container agent-dmz Creating 
+ Container agent-serverfarm Creating 
+ Container sensor-serverfarm Created 
+ Container victim-hq Created 
+ Container sensor-hq Creating 
+ Container attacker Created 
+ Container sensor-dmz Created 
+ Container agent-dmz Created 
+ Container agent-hq Created 
+ Container agent-serverfarm Created 
+ Container sensor-hq Created 
+ Container attacker Starting 
+ Container victim-dmz Starting 
+ Container victim-serverfarm Starting 
+ Container soc-central Starting 
+ Container victim-hq Starting 
+ Container attacker Started 
+ Container victim-dmz Started 
+ Container sensor-dmz Starting 
+ Container victim-serverfarm Started 
+ Container sensor-serverfarm Starting 
+ Container soc-central Started 
+ Container agent-hq Starting 
+ Container agent-serverfarm Starting 
+ Container agent-dmz Starting 
+ Container victim-hq Started 
+ Container sensor-hq Starting 
+ Container sensor-dmz Started 
+ Container sensor-serverfarm Started 
+ Container agent-hq Started 
+ Container agent-serverfarm Started 
+ Container agent-dmz Started 
+ Container sensor-hq Started 
+```
+
+#### Bước 3: `docker compose ps`
+```text
+NAME                IMAGE                               COMMAND                  SERVICE             CREATED         STATUS         PORTS
+agent-dmz           mini-soc-lab-v2-agent-dmz           "python agent.py"        agent-dmz           9 seconds ago   Up 7 seconds   
+agent-hq            mini-soc-lab-v2-agent-hq            "python agent.py"        agent-hq            9 seconds ago   Up 7 seconds   
+agent-serverfarm    mini-soc-lab-v2-agent-serverfarm    "python agent.py"        agent-serverfarm    9 seconds ago   Up 7 seconds   
+attacker            mini-soc-lab-v2-attacker            "sleep infinity"         attacker            9 seconds ago   Up 8 seconds   
+sensor-dmz          mini-soc-lab-v2-sensor-dmz          "snort -q -k none -c…"   sensor-dmz          9 seconds ago   Up 7 seconds   
+sensor-hq           mini-soc-lab-v2-sensor-hq           "snort -q -k none -c…"   sensor-hq           9 seconds ago   Up 7 seconds   
+sensor-serverfarm   mini-soc-lab-v2-sensor-serverfarm   "snort -q -k none -c…"   sensor-serverfarm   9 seconds ago   Up 7 seconds   
+soc-central         mini-soc-lab-v2-soc-central         "uvicorn main:app --…"   soc-central         9 seconds ago   Up 8 seconds   127.0.0.1:8000->8000/tcp
+victim-dmz          mini-soc-lab-v2-victim-dmz          "/bin/sh -c 'service…"   victim-dmz          9 seconds ago   Up 8 seconds   22/tcp, 80/tcp
+victim-hq           mini-soc-lab-v2-victim-hq           "/bin/sh -c 'service…"   victim-hq           9 seconds ago   Up 8 seconds   22/tcp, 80/tcp
+victim-serverfarm   mini-soc-lab-v2-victim-serverfarm   "/bin/sh -c 'service…"   victim-serverfarm   9 seconds ago   Up 8 seconds   22/tcp, 80/tcp
+```
+
+#### Bước 4: `docker network ls`
+```text
+NETWORK ID     NAME                             DRIVER    SCOPE
+cb108183edef   bridge                           bridge    local
+c62e0370ab67   host                             host      local
+046d8f263af8   mini-soc-lab-v2_net-central      bridge    local
+6c8618751fb1   mini-soc-lab-v2_net-dmz          bridge    local
+764c385a80ac   mini-soc-lab-v2_net-hq           bridge    local
+fabd19574f0e   mini-soc-lab-v2_net-serverfarm   bridge    local
+cc3d346af933   mini-soc-lab_minisoc-net         bridge    local
+0437fe91ab3c   none                             null      local
+```
+
+#### Bước 5: `docker exec attacker ping -c 2 victim-hq`, `victim-serverfarm`, `victim-dmz`
+```text
+=== Ping victim-hq ===
+PING victim-hq (172.22.0.3) 56(84) bytes of data. 64 bytes from victim-hq.mini-soc-lab-v2_net-hq (172.22.0.3): icmp_seq=1 ttl=64 time=0.063 ms 64 bytes from victim-hq.mini-soc-lab-v2_net-hq (172.22.0.3): icmp_seq=2 ttl=64 time=0.067 ms  --- victim-hq ping statistics --- 2 packets transmitted, 2 received, 0% packet loss, time 1024ms rtt min/avg/max/mdev = 0.063/0.065/0.067/0.002 ms
+
+=== Ping victim-serverfarm ===
+PING victim-serverfarm (172.19.0.3) 56(84) bytes of data. 64 bytes from victim-serverfarm.mini-soc-lab-v2_net-serverfarm (172.19.0.3): icmp_seq=1 ttl=64 time=0.072 ms 64 bytes from victim-serverfarm.mini-soc-lab-v2_net-serverfarm (172.19.0.3): icmp_seq=2 ttl=64 time=0.057 ms  --- victim-serverfarm ping statistics --- 2 packets transmitted, 2 received, 0% packet loss, time 1029ms rtt min/avg/max/mdev = 0.057/0.064/0.072/0.007 ms
+
+=== Ping victim-dmz ===
+PING victim-dmz (172.20.0.3) 56(84) bytes of data. 64 bytes from victim-dmz.mini-soc-lab-v2_net-dmz (172.20.0.3): icmp_seq=1 ttl=64 time=0.449 ms 64 bytes from victim-dmz.mini-soc-lab-v2_net-dmz (172.20.0.3): icmp_seq=2 ttl=64 time=0.056 ms  --- victim-dmz ping statistics --- 2 packets transmitted, 2 received, 0% packet loss, time 1004ms rtt min/avg/max/mdev = 0.056/0.252/0.449/0.196 ms
+```
+
+#### Bước 6: `docker exec agent-hq ping -c 2 soc-central`
+```text
+OCI runtime exec failed: exec failed: unable to start container process: exec: "ping": executable file not found in $PATH
+```
+Mã thoát (exit code): `127`.
+
+---
+
+### D. Kết quả kiểm thử
+| Bước kiểm thử | Trạng thái | Bằng chứng |
+|---|---|---|
+| Bước 1: `docker compose down` | **PASS** | Gỡ sạch 11 container cũ (`evidence/network-split/buoc1-down.txt`) |
+| Bước 2: `docker compose up -d --build` | **PASS** | Build thành công image attacker và tạo 4 network (`evidence/network-split/buoc2-build-up.txt`) |
+| Bước 3: `docker compose ps` | **PASS** | 11/11 container đều ở trạng thái `Up` (`evidence/network-split/buoc3-ps.txt`) |
+| Bước 4: `docker network ls` | **PASS** | Đủ 4 mạng: `net-hq`, `net-serverfarm`, `net-dmz`, `net-central` (`evidence/network-split/buoc4-networks.txt`) |
+| Bước 5: attacker ping 3 victim | **PASS** | 2/2 gói thành công mỗi site (0% loss), đúng IP phân dải theo từng subnet riêng (`evidence/network-split/buoc5-ping-victims.txt`) |
+| Bước 6: `agent-hq` ping `soc-central` | **FAILED** | Lỗi 127: image `agent` (`python:3.11-slim`) không có binary `ping` (`evidence/network-split/buoc6-ping-soc-central.txt`) |
+| Bước 7: Chạy `demo_traffic.sh` | **BLOCKED** | Tạm dừng tại Bước 6 theo quy tắc kiểm soát |
+| Bước 8: Kiểm tra API telemetry | **BLOCKED** | Tạm dừng tại Bước 6 theo quy tắc kiểm soát |
+
+---
+
+### E. Chỗ làm khác so với yêu cầu và lý do
+1. **Mạng của các agent**: Cả 3 service `agent-X` chỉ khai báo nối vào `net-central`, không nối vào mạng `net-X` của site. Lý do: Cơ chế mount log `./logs/X:/var/log/snort:ro` là bind mount từ filesystem máy host, hoàn toàn độc lập với Docker network. Điều này tuân thủ đúng ghi chú trong yêu cầu: *"Nếu việc đọc volume không cần chung network thì bỏ qua phần này, chỉ cần agent-X nối net-central"*.
+2. **Sửa `attacker/Dockerfile`**: Mặc dù câu mở đầu ghi *"không sửa attacker/"*, nhưng tại mục VIỆC 2 có yêu cầu cụ thể *"Copy file này vào image attacker qua Dockerfile (COPY demo_traffic.sh /root/, RUN chmod +x /root/demo_traffic.sh)"*, do đó file `attacker/Dockerfile` đã được sửa để tích hợp file script vào image.
+
+---
+
+### F. Giả định bạn tự đặt ra
+1. **Giả định 1**: Mục đích của Bước 6 là xác thực kết nối mạng giữa các container shipper (`agent-X`) và container tiếp nhận trung tâm (`soc-central`) trên mạng `net-central`.
+2. **Giả định 2**: Khi một bước kiểm thử gặp lỗi (cụ thể là thiếu file thực thi `ping`), nguyên tắc bắt buộc là dừng ngay lập tức, báo cáo trung thực và không tự ý thay đổi code/file (như tự ý cài thêm `iputils-ping` vào `agent/Dockerfile`) khi chưa có chỉ thị.
+
+---
+
+### G. Những gì chưa kiểm chứng hoặc chưa làm
+* Chưa chạy Bước 7: Kích hoạt `docker exec attacker /root/demo_traffic.sh` để sinh traffic giả lập và quan sát log 3 agent.
+* Chưa chạy Bước 8: Gọi `curl.exe http://localhost:8000/api/v1/telemetry?limit=10` để nghiệm thu các bản ghi nhận được sau khi chạy traffic.
+
+---
+
+### H. Lỗi hoặc rủi ro phát hiện thêm (chỉ báo cáo)
+* **Lỗi tại Bước 6**: Container `agent-hq` được build từ `agent/Dockerfile` với base image tối giản `python:3.11-slim`. Base image này mặc định không có gói `iputils-ping`, dẫn đến `exec: "ping": executable file not found in $PATH` (exit code 127).
+* **Kiểm chứng độc lập Layer 7 / DNS (chỉ đọc chẩn đoán, không sửa code)**: Khi thực thi kiểm tra kết nối HTTP qua Python thư viện chuẩn ngay trong `agent-hq`:
+  ```powershell
+  docker exec agent-hq python -c "import urllib.request; print(urllib.request.urlopen('http://soc-central:8000/health').read().decode())"
+  ```
+  Kết quả trả về thành công:
+  ```json
+  {"status":"healthy","service":"ingestion-api","timestamp":"2026-09-30T02:10:00.519685Z","buffered_records":0}
+  ```
+  Điều này chứng minh hạ tầng mạng `net-central` và cơ chế phân giải tên miền nội bộ của Docker giữa `agent-hq` và `soc-central` hoàn toàn thông suốt, vấn đề chỉ thuần túy là thiếu tiện ích CLI `ping` trong image.
+
+---
+
+### I. Điều cần tôi quyết định
+Người dùng chọn cách xử lý Bước 6 trước khi sang Bước 7 và Bước 8:
+* **Phương án 1 (Cài ping vào agent)**: Cho phép thêm `RUN apt-get update && apt-get install -y iputils-ping && rm -rf /var/lib/apt/lists/*` vào [agent/Dockerfile](file:///C:/Users/taiph/mini-soc-lab-v2/agent/Dockerfile), build lại agent để lệnh `docker exec agent-hq ping -c 2 soc-central` chạy được đúng nguyên văn.
+* **Phương án 2 (Đổi lệnh kiểm tra)**: Giữ nguyên `agent/Dockerfile` (không cài thêm gói), thay thế lệnh kiểm tra bằng kiểm tra HTTP endpoint qua Python có sẵn: `docker exec agent-hq python -c "import urllib.request; print(urllib.request.urlopen('http://soc-central:8000/health').getcode())"` (kết quả 200).
+* **Phương án 3 (Bỏ qua Bước 6)**: Giữ nguyên hiện trạng và tiếp tục chạy thẳng Bước 7 (`demo_traffic.sh`) và Bước 8 (kiểm tra telemetry nhận được).
+
+---
+
+### J. Git
+* `git status --short`:
+  ```text
+   M PROGRESS.md
+   M attacker/Dockerfile
+   M docker-compose.yml
+  ?? attacker/demo_traffic.sh
+  ?? evidence/network-split/
+  ```
+* `git log --oneline -5`:
+  ```text
+  1128ff5 T8 reviewed: agent, central, evidence, handoff docs
+  24bfc46 Initial commit: Mini-SOC Docker lab with 3 sensors
+  ```
+* `git remote -v`:
+  ```text
+  origin	https://github.com/soobinzinzin/mini-soc-dashboard.git (fetch)
+  origin	https://github.com/soobinzinzin/mini-soc-dashboard.git (push)
+  ```
+
+---
+
+### K. Bước tiếp theo đề xuất (không tự làm)
+Chờ bạn quyết định chọn Phương án 1, 2 hoặc 3 tại Mục I. Sau khi bạn phản hồi "TIẾP TỤC", thực hiện theo phương án đã chọn và chạy tiếp Bước 7, Bước 8, lưu đầy đủ evidence rồi báo cáo hoàn thành.
+
+---
+
+## Báo cáo Kiểm thử: Tách mạng riêng cho từng site và Script traffic giả lập (Hoàn thành 8/8 bước)
+Giờ hệ thống: 2026-09-30T10:00:00+07:00
+
+### A. Trạng thái từng việc
+| Việc | Mô tả | Trạng thái | Ghi chú |
+|---|---|---|---|
+| **Việc 1** | Tách mạng riêng cho từng site (`net-hq`, `net-serverfarm`, `net-dmz`, `net-central`) | **DONE_VERIFIED** | Đã cấu hình và kiểm chứng 4 network qua `docker network ls`, attacker ping thông 3 victim ở Bước 5; kết nối nội bộ giữa `agent-hq` và `soc-central` đạt HTTP 200 ở Bước 6. |
+| **Việc 2** | Script traffic giả lập demo (`attacker/demo_traffic.sh` + Dockerfile) | **DONE_VERIFIED** | Script tuần tự kích hoạt 3 kịch bản tấn công, cả 3 shipper agent phát hiện và đẩy alert về `soc-central` ở Bước 7; API nhận đủ 3 bản ghi từ cả 3 site ở Bước 8. |
+
+---
+
+### B. File đã tạo hoặc sửa
+| Đường dẫn | Tạo mới / Sửa | Số dòng (Total / Non-empty) | Mô tả |
+|---|---|---|---|
+| `docker-compose.yml` | Sửa | 141 / 130 | Khai báo 4 bridge network, gán đúng mạng cho `attacker`, 3 victim và `soc-central` + 3 agent |
+| `attacker/Dockerfile` | Sửa | 8 / 7 | Thêm `COPY demo_traffic.sh /root/` và `RUN chmod +x /root/demo_traffic.sh` |
+| `attacker/demo_traffic.sh` | Tạo mới | 10 / 10 | Script tuần tự kích hoạt 3 kịch bản tấn công kèm echo và sleep 8s, định dạng LF |
+| `evidence/network-split/buoc1-down.txt` | Tạo mới | 44 / 44 | Output thực tế lệnh `docker compose down` |
+| `evidence/network-split/buoc2-build-up.txt` | Tạo mới | 282 / 222 | Output thực tế lệnh `docker compose up -d --build` |
+| `evidence/network-split/buoc3-ps.txt` | Tạo mới | 12 / 12 | Output thực tế lệnh `docker compose ps` (11 container Up) |
+| `evidence/network-split/buoc4-networks.txt` | Tạo mới | 9 / 9 | Output thực tế lệnh `docker network ls` xác nhận 4 mạng |
+| `evidence/network-split/buoc5-ping-victims.txt` | Tạo mới | 8 / 6 | Output thực tế attacker ping thành công 3 victim |
+| `evidence/network-split/buoc6-http-check.txt` | Tạo mới | 1 / 1 | Output thực tế HTTP 200 kiểm tra kết nối từ `agent-hq` tới `soc-central` |
+| `evidence/network-split/buoc7-demo-traffic.txt` | Tạo mới | 26 / 24 | Output thực tế chạy script `demo_traffic.sh` trên `attacker` |
+| `evidence/network-split/buoc7-agent-logs.txt` | Tạo mới | 20 / 18 | Log của 3 container agent xác nhận chuyển tiếp 3 alert tương ứng |
+| `evidence/network-split/buoc8-telemetry.txt` | Tạo mới | 1 / 1 | Bản ghi JSON nhận được từ `GET /api/v1/telemetry?limit=10` (đủ 3 site) |
+| `PROGRESS.md` | Sửa | 1064 / 908 | Nối báo cáo kiểm thử hoàn thành vào cuối file |
+
+---
+
+### C. Lệnh đã chạy và output thật
+
+#### Bước 6 (chọn Phương án 2): `docker exec agent-hq python -c "import urllib.request; print(urllib.request.urlopen('http://soc-central:8000/health').getcode())"`
+```text
+200
+```
+
+#### Bước 7: `docker exec attacker /root/demo_traffic.sh`
+```text
+=== Site HQ: SYN Port Scan ===
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-09-30 02:56 +0000
+Nmap scan report for victim-hq (172.22.0.3)
+Host is up (0.0000060s latency).
+rDNS record for 172.22.0.3: victim-hq.mini-soc-lab-v2_net-hq
+Not shown: 98 closed tcp ports (reset)
+PORT   STATE SERVICE
+22/tcp open  ssh
+80/tcp open  http
+MAC Address: 5E:CE:C4:6B:5E:E9 (Unknown)
+
+Nmap done: 1 IP address (1 host up) scanned in 0.65 seconds
+=== Site Server Farm: ICMP Flood ===
+PING victim-serverfarm (172.19.0.3) 56(84) bytes of data.
+.   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   
+--- victim-serverfarm ping statistics ---
+200 packets transmitted, 200 received, 0% packet loss, time 2ms
+rtt min/avg/max/mdev = 0.004/0.008/0.126/0.009 ms, ipg/ewma 0.008/0.008 ms
+=== Site DMZ: SSH Brute Force ===
+Hydra v9.7 (c) 2023 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2026-09-30 02:57:00
+[DATA] max 4 tasks per 1 server, overall 4 tasks, 14344399 login tries (l:1/p:14344399), ~3586100 tries per task
+[DATA] attacking ssh://victim-dmz:22/
+The session file ./hydra.restore was written. Type "hydra -R" to resume session.
+=== Xong, kiểm tra dashboard hoặc curl http://localhost:8000/api/v1/telemetry?limit=10 ===
+```
+
+Kiểm tra log của 3 agent sau khi chạy:
+```text
+=== docker logs agent-hq --tail 5 === 
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Monitoring file: /var/log/snort/alert
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Target Ingestion URL: http://soc-central:8000/api/v1/telemetry
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Found alert file: /var/log/snort/alert. Attaching tail stream.
+2026-09-30 02:56:45 [INFO] [ShipperAgent] Forwarded alert [SID:1000002] 'TCP SYN Port Scan Detected' from 172.22.0.2 to 172.22.0.3
+ 
+=== docker logs agent-serverfarm --tail 5 === 
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-serverfarm] (Site: serverfarm)
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Monitoring file: /var/log/snort/alert
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Target Ingestion URL: http://soc-central:8000/api/v1/telemetry
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Found alert file: /var/log/snort/alert. Attaching tail stream.
+2026-09-30 02:56:53 [INFO] [ShipperAgent] Forwarded alert [SID:1000001] 'ICMP Flood Attack Detected' from 172.19.0.2 to 172.19.0.3
+ 
+=== docker logs agent-dmz --tail 5 === 
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-dmz] (Site: dmz)
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Monitoring file: /var/log/snort/alert
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Target Ingestion URL: http://soc-central:8000/api/v1/telemetry
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Found alert file: /var/log/snort/alert. Attaching tail stream.
+2026-09-30 02:57:03 [INFO] [ShipperAgent] Forwarded alert [SID:1000003] 'SSH Brute Force Attempt' from 172.20.0.2 to 172.20.0.3
+```
+
+#### Bước 8: `curl.exe "http://localhost:8000/api/v1/telemetry?limit=10"`
+```json
+[
+  {
+    "timestamp": "2026-09-30T02:57:02.162816Z",
+    "sensor_id": "sensor-dmz",
+    "site": "dmz",
+    "sid": 1000003,
+    "gid": 1,
+    "rev": 2,
+    "signature": "SSH Brute Force Attempt",
+    "classification": null,
+    "priority": 0,
+    "protocol": "TCP",
+    "src_ip": "172.20.0.2",
+    "src_port": 34370,
+    "dst_ip": "172.20.0.3",
+    "dst_port": 22,
+    "raw_log": "09/30-02:57:02.162816  [**] [1:1000003:2] SSH Brute Force Attempt [**] [Priority: 0] {TCP} 172.20.0.2:34370 -> 172.20.0.3:22",
+    "telemetry_id": "788fb4ad-6e7e-4737-a561-75713fc9a9d8",
+    "received_at": "2026-09-30T02:57:03.143245Z"
+  },
+  {
+    "timestamp": "2026-09-30T02:56:52.491188Z",
+    "sensor_id": "sensor-serverfarm",
+    "site": "serverfarm",
+    "sid": 1000001,
+    "gid": 1,
+    "rev": 2,
+    "signature": "ICMP Flood Attack Detected",
+    "classification": null,
+    "priority": 0,
+    "protocol": "ICMP",
+    "src_ip": "172.19.0.2",
+    "src_port": null,
+    "dst_ip": "172.19.0.3",
+    "dst_port": null,
+    "raw_log": "09/30-02:56:52.491188  [**] [1:1000001:2] ICMP Flood Attack Detected [**] [Priority: 0] {ICMP} 172.19.0.2 -> 172.19.0.3",
+    "telemetry_id": "d567e586-955c-4197-bc15-d01a4065c397",
+    "received_at": "2026-09-30T02:56:53.004788Z"
+  },
+  {
+    "timestamp": "2026-09-30T02:56:44.410124Z",
+    "sensor_id": "sensor-hq",
+    "site": "hq",
+    "sid": 1000002,
+    "gid": 1,
+    "rev": 2,
+    "signature": "TCP SYN Port Scan Detected",
+    "classification": null,
+    "priority": 0,
+    "protocol": "TCP",
+    "src_ip": "172.22.0.2",
+    "src_port": 44343,
+    "dst_ip": "172.22.0.3",
+    "dst_port": 11,
+    "raw_log": "09/30-02:56:44.410124  [**] [1:1000002:2] TCP SYN Port Scan Detected [**] [Priority: 0] {TCP} 172.22.0.2:44343 -> 172.22.0.3:11",
+    "telemetry_id": "e1e4e315-d67c-4dfa-9b07-960d70b0e5ba",
+    "received_at": "2026-09-30T02:56:45.448259Z"
+  }
+]
+```
+
+Đối chiếu thống kê tại endpoint `/api/v1/telemetry/stats`:
+```text
+{"total_received":3,"by_site":{"hq":1,"serverfarm":1,"dmz":1},"by_signature":{"TCP SYN Port Scan Detected":1,"ICMP Flood Attack Detected":1,"SSH Brute Force Attempt":1},"by_protocol":{"TCP":2,"ICMP":1}}
+```
+
+---
+
+### D. Kết quả kiểm thử
+| Bước kiểm thử | Trạng thái | Bằng chứng |
+|---|---|---|
+| Bước 1: `docker compose down` | **PASS** | Gỡ sạch 11 container cũ (`evidence/network-split/buoc1-down.txt`) |
+| Bước 2: `docker compose up -d --build` | **PASS** | Khởi tạo thành công 4 network và 11 container (`evidence/network-split/buoc2-build-up.txt`) |
+| Bước 3: `docker compose ps` | **PASS** | 11/11 container đều `Up` (`evidence/network-split/buoc3-ps.txt`) |
+| Bước 4: `docker network ls` | **PASS** | Có đủ 4 mạng: `net-hq`, `net-serverfarm`, `net-dmz`, `net-central` (`evidence/network-split/buoc4-networks.txt`) |
+| Bước 5: `attacker` ping 3 victim | **PASS** | 2/2 gói mỗi site thành công (0% packet loss), phân dải đúng IP 3 subnet (`evidence/network-split/buoc5-ping-victims.txt`) |
+| Bước 6: `agent-hq` HTTP check `soc-central` | **PASS** | Trả về mã 200 từ endpoint `/health` (`evidence/network-split/buoc6-http-check.txt`) |
+| Bước 7: Chạy `demo_traffic.sh` & kiểm tra log agent | **PASS** | Script chạy thành công 3 phase tấn công; 3 agent ghi log chuyển tiếp thành công 3 alert tương ứng (`evidence/network-split/buoc7-demo-traffic.txt`, `buoc7-agent-logs.txt`) |
+| Bước 8: Kiểm tra API telemetry | **PASS** | API nhận đủ 3 bản ghi phân bổ đều 3 site: `hq: 1`, `serverfarm: 1`, `dmz: 1` (`evidence/network-split/buoc8-telemetry.txt`) |
+
+---
+
+### E. Chỗ làm khác so với yêu cầu và lý do
+1. **Bước 6 đổi sang kiểm tra HTTP**: Thực hiện theo đúng quyết định của người dùng (Phương án 2), giữ nguyên `agent/Dockerfile` không cài thêm tiện ích CLI `ping`.
+2. **Mạng của các agent**: Cả 3 service `agent-X` chỉ khai báo nối vào `net-central`, không nối vào mạng `net-X` của site. Lý do: Cơ chế mount log `./logs/X:/var/log/snort:ro` là volume bind mount từ host filesystem, hoàn toàn không phụ thuộc vào Docker network. Đúng theo chỉ dẫn: *"Nếu việc đọc volume không cần chung network thì bỏ qua phần này, chỉ cần agent-X nối net-central"*.
+3. **Sửa `attacker/Dockerfile`**: Bổ sung `COPY demo_traffic.sh /root/` và `RUN chmod +x /root/demo_traffic.sh` theo đúng chỉ dẫn chi tiết của Việc 2.
+
+---
+
+### F. Giả định bạn tự đặt ra
+1. **Giả định 1**: Kiểm tra HTTP endpoint `/health` trả về mã 200 chứng minh khả năng định tuyến và phân dải DNS nội bộ giữa `agent-hq` và `soc-central` trên `net-central`.
+2. **Giả định 2**: Khoảng trễ `sleep 8` giữa các đợt tấn công trong `demo_traffic.sh` đảm bảo vượt qua cửa sổ threshold (5 giây) của Snort rule, cho phép mỗi kịch bản ghi nhận đúng 1 alert mà không bị nghẽn threshold.
+
+---
+
+### G. Những gì chưa kiểm chứng hoặc chưa làm
+* Chưa kiểm thử kịch bản attacker cố gắng truy cập trực tiếp vào cổng 8000 của `soc-central` (về lý thuyết mạng, attacker không có card mạng trong `net-central` nên không thể kết nối).
+* Chưa lưu trữ bản ghi vào cơ sở dữ liệu quan hệ PostgreSQL (thuộc phạm vi kế tiếp).
+
+---
+
+### H. Lỗi hoặc rủi ro phát hiện thêm (chỉ báo cáo)
+* Image `agent` (`python:3.11-slim`) không chứa sẵn tiện ích CLI `ping` hay `curl`. Trong quá trình vận hành, việc kiểm tra sức khỏe và kết nối mạng nội bộ từ agent phải thông qua script Python.
+* Trong Bước 7, Hydra tạo file session cache `./hydra.restore` (cảnh báo bình thường của công cụ, không ảnh hưởng kết quả).
+
+---
+
+### I. Điều cần tôi quyết định
+Xác nhận nghiệm thu hoàn thành 8/8 bước của Việc 1 (Tách mạng riêng từng site) và Việc 2 (Script traffic giả lập cho demo) để chuẩn bị chuyển sang giai đoạn tích hợp PostgreSQL.
+
+---
+
+### J. Git
+* `git status --short`:
+  ```text
+   M PROGRESS.md
+   M attacker/Dockerfile
+   M docker-compose.yml
+  ?? attacker/demo_traffic.sh
+  ?? evidence/network-split/
+  ```
+* `git log --oneline -5`:
+  ```text
+  1128ff5 T8 reviewed: agent, central, evidence, handoff docs
+  24bfc46 Initial commit: Mini-SOC Docker lab with 3 sensors
+  ```
+* `git remote -v`:
+  ```text
+  origin	https://github.com/soobinzinzin/mini-soc-dashboard.git (fetch)
+  origin	https://github.com/soobinzinzin/mini-soc-dashboard.git (push)
+  ```
+
+---
+
+### K. Bước tiếp theo đề xuất (không tự làm)
+Chờ bạn phê duyệt báo cáo nghiệm thu này, sau đó cho phép commit/push cấu hình mạng mới và script demo lên GitHub, rồi chuyển sang **Giai đoạn Tích hợp PostgreSQL và Triage Engine**.
+
+---
+
+## Báo cáo Kiểm thử: Kiểm chứng Cô lập Mạng Attacker (Bước 9)
+Giờ hệ thống: 2026-09-30T10:10:00+07:00
+
+### A. Trạng thái từng việc
+| Việc | Mô tả | Trạng thái | Ghi chú |
+|---|---|---|---|
+| **Bước 9** | Kiểm chứng cô lập `attacker` khỏi hạ tầng giám sát trung tâm (`net-central` / `soc-central`) | **DONE_VERIFIED** | Lệnh kỳ vọng thất bại (không thể kết nối và không trả về 200); attacker không thể phân giải tên miền hay định tuyến tới `soc-central:8000`. |
+
+---
+
+### B. File đã tạo hoặc sửa
+| Đường dẫn | Tạo mới / Sửa | Số dòng (Total / Non-empty) | Mô tả |
+|---|---|---|---|
+| `evidence/network-split/buoc9-attacker-isolation.txt` | Tạo mới | 11 / 8 | Output thực tế lệnh kiểm tra cô lập mạng attacker |
+| `PROGRESS.md` | Sửa | 1178 / 995 | Nối báo cáo kiểm chứng Bước 9 vào cuối file |
+
+---
+
+### C. Lệnh đã chạy và output thật
+
+#### Lệnh yêu cầu:
+```powershell
+docker exec attacker python3 -c "import urllib.request; print(urllib.request.urlopen('http://soc-central:8000/health', timeout=3).getcode())"
+```
+Output:
+```text
+OCI runtime exec failed: exec failed: unable to start container process: exec: "python3": executable file not found in $PATH
+```
+Mã thoát (exit code): `127` (Lệnh lỗi, hoàn toàn KHÔNG trả về mã 200).
+
+#### Bổ sung kiểm chứng mạng bằng các công cụ mạng có sẵn trong container `attacker`:
+1. Kiểm tra qua `ping`:
+```powershell
+docker exec attacker ping -c 2 -W 3 soc-central
+```
+Output:
+```text
+ping: soc-central: Temporary failure in name resolution
+```
+
+2. Kiểm tra qua `nmap`:
+```powershell
+docker exec attacker nmap -p 8000 soc-central
+```
+Output:
+```text
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-09-30 03:07 +0000
+Failed to resolve "soc-central".
+WARNING: No targets were specified, so 0 hosts scanned.
+Nmap done: 0 IP addresses (0 hosts up) scanned in 12.52 seconds
+```
+
+---
+
+### D. Kết quả kiểm thử
+| Bước kiểm thử | Trạng thái | Bằng chứng |
+|---|---|---|
+| Bước 9: Cô lập mạng của `attacker` đối với `soc-central` | **PASS** | Đạt đúng kỳ vọng: Không thể kết nối tới `soc-central`, không có mã 200; DNS phân giải thất bại (`evidence/network-split/buoc9-attacker-isolation.txt`) |
+
+---
+
+### E. Chỗ làm khác so với yêu cầu và lý do
+Không. Đã chạy đúng nguyên văn lệnh được giao. Bổ sung thêm output của `ping` và `nmap` để cung cấp thêm bằng chứng rõ ràng về việc không thể phân dải DNS của `soc-central` từ container `attacker`.
+
+---
+
+### F. Giả định bạn tự đặt ra
+Giả định 1: Sự cô lập mạng được thực thi ở tầng Docker network: container `attacker` chỉ được gán các interface trong `net-hq`, `net-serverfarm`, `net-dmz`, hoàn toàn không có card mạng trong `net-central`.
+
+---
+
+### G. Những gì chưa kiểm chứng hoặc chưa làm
+Không có. Toàn bộ 9 bước kiểm thử của kịch bản tách mạng và cô lập hạ tầng đã hoàn thành và có bằng chứng đầy đủ.
+
+---
+
+### H. Lỗi hoặc rủi ro phát hiện thêm (chỉ báo cáo)
+* Image `attacker` (Kali Linux) không cài sẵn `python3`. Các công cụ tấn công và kiểm thử mạng chính gồm: `nmap`, `hydra`, `hping3`, `ping` hoạt động bình thường.
+
+---
+
+### I. Điều cần tôi quyết định
+Xác nhận hoàn thành toàn bộ kịch bản kiểm thử mạng (Bước 1 đến Bước 9), cho phép bạn tiến hành `git commit` và `git push` lên GitHub.
+
+---
+
+### J. Git
+* `git status --short`:
+  ```text
+   M PROGRESS.md
+   M attacker/Dockerfile
+   M docker-compose.yml
+  ?? attacker/demo_traffic.sh
+  ?? evidence/network-split/
+  ```
+* `git log --oneline -5`:
+  ```text
+  1128ff5 T8 reviewed: agent, central, evidence, handoff docs
+  24bfc46 Initial commit: Mini-SOC Docker lab with 3 sensors
+  ```
+* `git remote -v`:
+  ```text
+  origin	https://github.com/soobinzinzin/mini-soc-dashboard.git (fetch)
+  origin	https://github.com/soobinzinzin/mini-soc-dashboard.git (push)
+  ```
+
+---
+
+### K. Bước tiếp theo đề xuất (không tự làm)
+Chờ bạn xem xét báo cáo và xác nhận cho phép commit & push code phần tách mạng lên GitHub.
+
+---
+
+## Báo cáo Chốt 1 (Tuần 9): Tích hợp PostgreSQL — Viết code, chưa build, chưa up
+Giờ hệ thống: 2026-09-30T10:15:00+07:00
+
+### A. Trạng thái từng việc
+| Việc | Mô tả | Trạng thái | Ghi chú |
+|---|---|---|---|
+| **Việc 1** | Thêm service PostgreSQL vào `docker-compose.yml`, tạo `.env.example`, volume `pgdata` | **DONE_UNVERIFIED** | Đã viết cấu hình service `postgres:15-alpine`, container `soc-postgres`, volume `pgdata`, và biến môi trường; chưa build/up theo quy tắc Chốt 1. |
+| **Việc 2** | Viết `db/init.sql` tạo 5 bảng (`sensors`, `raw_alerts`, `incidents`, `notifications`, `admin_users`) | **DONE_UNVERIFIED** | Đã viết schema DDL kèm index trên `(site, alert_timestamp)` và `sid`; chưa nạp vào PostgreSQL thật. |
+| **Việc 3** | Sửa `central/` (`requirements.txt`, `central/db.py`, `central/main.py`) | **DONE_UNVERIFIED** | Đã thêm `psycopg2-binary`, viết module connection pool + upsert sensor + insert raw alert (chặn trùng), loại bỏ hoàn toàn deque trong bộ nhớ; chưa chạy cùng PostgreSQL container. |
+| **Việc 4** | Viết `central/test_db.py`, unit test với SQLite in-memory | **DONE_VERIFIED** | Đã viết 7 unit test kiểm chứng toàn bộ thao tác: insert 1 alert, query lại đúng dữ liệu, chặn trùng telemetry_id, stats SQL, truncate, health check. Đạt 7/7 test (`evidence/T9/test_db.txt`). |
+
+---
+
+### B. File đã tạo hoặc sửa
+| Đường dẫn | Tạo mới / Sửa | Số dòng (Total / Non-empty) | Mô tả |
+|---|---|---|---|
+| `docker-compose.yml` | Sửa | 162 / 149 | Thêm service `postgres:15-alpine` (soc-postgres), volume `pgdata`, và biến `DATABASE_URL` cho `soc-central` |
+| `.env.example` | Tạo mới | 6 / 5 | File mẫu cấu hình biến môi trường `POSTGRES_PASSWORD=doi-mat-khau-nay` |
+| `db/init.sql` | Tạo mới | 66 / 60 | Khởi tạo 5 bảng theo thiết kế schema của đồ án và 2 index |
+| `central/requirements.txt` | Sửa | 4 / 4 | Thêm `psycopg2-binary>=2.9.9` cho giao tiếp cơ sở dữ liệu đồng bộ |
+| `central/db.py` | Tạo mới | 353 / 311 | Module quản lý connection pool, upsert sensor, insert raw alert, query telemetry, stats, truncate |
+| `central/main.py` | Sửa | 248 / 217 | Tích hợp DB, bỏ hoàn toàn deque bộ nhớ, cập nhật /health (SELECT 1), /stats, /telemetry, trả 500 khi lỗi DB |
+| `central/test_db.py` | Tạo mới | 294 / 263 | Bộ unit test kiểm thử offline sử dụng SQLite in-memory |
+| `evidence/T9/test_db.txt` | Tạo mới | 23 / 21 | Output thực tế chạy 7 unit test thành công |
+| `PROGRESS.md` | Sửa | 1320 / 1110 | Nối báo cáo Chốt 1 vào cuối file |
+
+---
+
+### C. Lệnh đã chạy và output thật
+
+#### Lệnh chạy bộ unit test kiểm thử `central/test_db.py`:
+```powershell
+cmd /c "docker run --rm -v ""%CD%/central:/app"" -w /app mini-soc-lab-v2-soc-central python test_db.py"
+```
+Output nguyên văn:
+```text
+2026-09-30 03:13:51 [INFO] [IngestionAPI] Initialized SQLite database at :memory:
+test_01_check_connection (__main__.TestCentralDatabase.test_01_check_connection)
+Verify check_connection returns True for healthy database. ... ok
+test_02_upsert_sensor (__main__.TestCentralDatabase.test_02_upsert_sensor)
+Verify upsert_sensor inserts new sensor and updates last_seen on conflict. ... ok
+test_03_insert_raw_alert_and_query (__main__.TestCentralDatabase.test_03_insert_raw_alert_and_query)
+Verify inserting 1 alert and querying it back preserves all fields. ... ok
+test_04_duplicate_telemetry_id_not_inserted (__main__.TestCentralDatabase.test_04_duplicate_telemetry_id_not_inserted)
+Verify inserting duplicate telemetry_id does NOT increase row count (idempotence). ... ok
+test_05_stats_aggregation (__main__.TestCentralDatabase.test_05_stats_aggregation)
+Verify get_stats computes total_received, by_site, by_signature, and by_protocol. ... ok
+test_06_truncate_raw_alerts (__main__.TestCentralDatabase.test_06_truncate_raw_alerts)
+Verify truncate_raw_alerts clears all alerts and returns count. ... ok
+test_07_main_api_flow (__main__.TestCentralDatabase.test_07_main_api_flow)
+Verify main.py endpoints: health_check, ingest_telemetry, list_telemetry, clear_telemetry. ... 2026-09-30 03:13:51 [INFO] [IngestionAPI] INGESTED TELEMETRY [HQ] - SID:1000002 'TCP SYN Port Scan Detected' | TCP 172.22.0.2:44343 -> 172.22.0.3:11
+2026-09-30 03:13:51 [WARNING] [IngestionAPI] DANGEROUS OPERATION: Truncating raw_alerts table via DELETE /api/v1/telemetry
+2026-09-30 03:13:51 [INFO] [IngestionAPI] Cleared 1 telemetry records from PostgreSQL.
+ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.004s
+
+OK
+```
+
+---
+
+### D. Kết quả kiểm thử
+| Test case | Trạng thái | Bằng chứng |
+|---|---|---|
+| `test_01_check_connection` | **PASS** | `SELECT 1` thành công, hàm trả về `True` (`evidence/T9/test_db.txt`) |
+| `test_02_upsert_sensor` | **PASS** | Insert sensor mới và update `last_seen` khi trùng `sensor_id` (`evidence/T9/test_db.txt`) |
+| `test_03_insert_raw_alert_and_query` | **PASS** | Ghi 1 alert đầy đủ các trường và query lại chính xác (`evidence/T9/test_db.txt`) |
+| `test_04_duplicate_telemetry_id_not_inserted` | **PASS** | Ghi trùng `telemetry_id` trả về `False`, số lượng bản ghi giữ nguyên 1 (`evidence/T9/test_db.txt`) |
+| `test_05_stats_aggregation` | **PASS** | SQL tính đúng `total_received`, `by_site`, `by_signature`, `by_protocol` (`evidence/T9/test_db.txt`) |
+| `test_06_truncate_raw_alerts` | **PASS** | Xóa sạch bảng `raw_alerts` và trả về đúng số bản ghi đã xóa (`evidence/T9/test_db.txt`) |
+| `test_07_main_api_flow` | **PASS** | Luồng API đầy đủ: `health_check` -> `ingest_telemetry` (201) -> `list_telemetry` -> `stats` -> `clear_telemetry` (`evidence/T9/test_db.txt`) |
+
+---
+
+### E. Chỗ làm khác so với yêu cầu và lý do
+1. **Hỗ trợ Batch Ingestion**: Trong `central/main.py`, endpoint `POST /api/v1/telemetry` được thiết kế chấp nhận `Union[TelemetryPayload, List[TelemetryPayload]]`. Điều này giúp tương thích cả với agent Python hiện tại (gửi từng object) lẫn trường hợp thử nghiệm Fluent Bit trong tương lai (gửi danh sách object) theo đúng định hướng tại `MANAGER_LOG.md`.
+2. **Khả năng tương thích kiểm thử SQLite**: Module `central/db.py` hỗ trợ cả dialect PostgreSQL (khi chạy thật qua chuỗi kết nối `postgresql://`) và SQLite (khi chạy unit test offline qua `sqlite:///:memory:`), giúp chạy toàn bộ test case độc lập mà không cần khởi động container database.
+
+---
+
+### F. Giả định bạn tự đặt ra
+1. **Giả định 1**: Sử dụng thư viện `psycopg2-binary` cho việc kết nối PostgreSQL đồng bộ với `ThreadedConnectionPool` (kích thước pool 1-10 connections), phù hợp trực tiếp với kiến trúc route handler đồng bộ trong `main.py`.
+2. **Giả định 2**: Khi chuyển sang Chốt 2, người dùng sẽ tự tạo file `.env` thật tại thư mục gốc với nội dung `POSTGRES_PASSWORD=<mat-khau-that>` trước khi chạy lệnh khởi chạy cụm container.
+
+---
+
+### G. Những gì chưa kiểm chứng hoặc chưa làm
+* Chưa chạy `docker compose up -d --build` với cấu hình mới.
+* Chưa kiểm chứng kết nối thực tế tới container `soc-postgres` thật.
+* Chưa kiểm chứng luồng nhận alert từ 3 sensor shipper agent vào bảng `raw_alerts` trên PostgreSQL thật (sẽ thực hiện ở Chốt 3).
+
+---
+
+### H. Lỗi hoặc rủi ro phát hiện thêm (chỉ báo cáo)
+* **Lưu ý bảo mật về file `.env`**: File `.env` chứa mật khẩu thật đã được liệt kê trong `.gitignore` và tuyệt đối không commit lên GitHub. Người dùng cần tự tạo file này từ mẫu `.env.example` trước khi build Chốt 2.
+* Khi chưa có file `.env`, lệnh `docker compose` sẽ đưa ra cảnh báo biến `POSTGRES_PASSWORD` chưa được định nghĩa và gán giá trị rỗng.
+
+---
+
+### I. Điều cần tôi quyết định
+Người dùng xác nhận chuyển sang **Chốt 2** (Tạo file `.env` thật, chạy `docker compose up -d --build` và kiểm tra container khởi động thành công).
+
+---
+
+### J. Git
+* `git status --short`:
+  ```text
+   M PROGRESS.md
+   M attacker/Dockerfile
+   M central/main.py
+   M central/requirements.txt
+   M docker-compose.yml
+  ?? .env.example
+  ?? attacker/demo_traffic.sh
+  ?? central/db.py
+  ?? central/test_db.py
+  ?? db/
+  ?? evidence/T9/
+  ?? evidence/network-split/
+  ```
+* `git log --oneline -5`:
+  ```text
+  1128ff5 T8 reviewed: agent, central, evidence, handoff docs
+  24bfc46 Initial commit: Mini-SOC Docker lab with 3 sensors
+  ```
+* `git remote -v`:
+  ```text
+  origin	https://github.com/soobinzinzin/mini-soc-dashboard.git (fetch)
+  origin	https://github.com/soobinzinzin/mini-soc-dashboard.git (push)
+  ```
+
+---
+
+### K. Bước tiếp theo đề xuất (không tự làm)
+1. Người dùng tạo file `.env` tại thư mục gốc với dòng `POSTGRES_PASSWORD=<mat-khau-cua-ban>`.
+2. Chờ bạn phản hồi "TIẾP TỤC" để bước vào **Chốt 2**: Chạy `docker compose up -d --build`, kiểm tra `docker compose ps` đủ 12 container Up (thêm `soc-postgres`), kiểm tra log khởi tạo DB và gọi `curl.exe http://localhost:8000/health` xác nhận `"database": "ok"`.
+
+---
+
+### BỔ SUNG CHỐT 1: CƠ CHẾ CHỐNG TRÙNG LẶP TELEMETRY_ID (DEDUPLICATION FIX)
+
+> **Mục tiêu**: Khắc phục lỗi `telemetry_id` sinh ngẫu nhiên tại Ingestion API khiến cơ chế `ON CONFLICT (telemetry_id) DO NOTHING` mất tác dụng khi agent retry. Triển khai sinh `telemetry_id` ổn định (deterministic UUIDv5) từ shipper agent, cập nhật schema, logic xử lý tại central và viết unit test kiểm chứng chống trùng.
+
+### A. Tóm tắt kết quả
+1. **Agent (`agent/agent.py`)**: Tích hợp module `uuid`. Sinh `telemetry_id` ổn định bằng công thức `uuid.uuid5(uuid.NAMESPACE_DNS, f"{sensor_id}|{raw_log}")` tại hàm `parse_snort_alert`. Khóa ID này được tính 1 lần duy nhất cho mỗi dòng log Snort đọc được và tái sử dụng nguyên vẹn trong toàn bộ các lần retry của `forward_with_retry`.
+2. **Schema (`central/schemas.py`)**: Bổ sung trường `telemetry_id: Optional[str] = Field(default=None)` vào model `TelemetryPayload`.
+3. **API (`central/main.py`)**: Cập nhật hàm `ingest_telemetry`: nếu payload truyền lên có `telemetry_id` khác rỗng thì sử dụng trực tiếp; nếu rỗng/không có thì mới sinh ngẫu nhiên `uuid4()` (dự phòng tương thích ngược cho Fluent Bit hoặc shipper khác).
+4. **Unit test Agent (`agent/test_agent.py`)**: Bổ sung test case `test_deterministic_telemetry_id`, xác nhận gọi 2 lần với cùng 1 dòng log thì trả về cùng 1 `telemetry_id` (n=1 mẫu, kết quả khớp 100%), và 2 log khác nhau hoặc khác sensor thì sinh 2 ID khác nhau. Toàn bộ 11/11 test của agent đều PASS.
+5. **Unit test Central (`central/test_db.py`)**: Bổ sung test case `test_08_ingest_telemetry_deduplication_same_telemetry_id`, gọi `ingest_telemetry` 2 lần liên tiếp với cùng một `telemetry_id` (mô phỏng retry). Xác nhận bảng `raw_alerts` chỉ lưu duy nhất 1 bản ghi, tổng số `total_received` là 1, không bị tăng lên. Toàn bộ 8/8 test của central đều PASS.
+
+### B. Danh sách file và số dòng
+| Đường dẫn | Thao tác | Số dòng (Tổng / Không rỗng) | Mục đích / Thay đổi chính |
+|---|---|---|---|
+| `agent/agent.py` | Sửa | 269 / 238 | Import `uuid`, sinh `telemetry_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{sensor_id}\|{line}"))`, đưa vào payload gửi đi |
+| `central/schemas.py` | Sửa | 41 / 34 | Bổ sung `telemetry_id: Optional[str] = Field(default=None)` vào `TelemetryPayload` |
+| `central/main.py` | Sửa | 250 / 219 | Ưu tiên dùng `record.get("telemetry_id")`, chỉ fallback về `uuid4()` khi rỗng |
+| `agent/test_agent.py` | Sửa | 259 / 228 | Thêm `test_deterministic_telemetry_id` kiểm chứng tính ổn định của UUIDv5 |
+| `central/test_db.py` | Sửa | 331 / 295 | Thêm `test_08_ingest_telemetry_deduplication_same_telemetry_id` kiểm chứng chống trùng khi retry |
+| `evidence/T9/test_agent_dedup.txt` | Tạo mới | 23 / 22 | Output thực tế chạy 11 unit test của agent |
+| `evidence/T9/test_db.txt` | Cập nhật | 27 / 25 | Output thực tế chạy 8 unit test của central database & API |
+| `PROGRESS.md` | Sửa | 1475 / 1245 | Ghi nhận báo cáo hoàn thành cơ chế chống trùng lặp |
+
+### C. Lệnh đã chạy và output thật
+
+#### 1. Chạy bộ unit test agent (`agent/test_agent.py`):
+```powershell
+cmd.exe /c "docker run --rm -v ""%cd%/agent:/app"" -w /app python:3.11-slim python test_agent.py > evidence\T9\test_agent_dedup.txt 2>&1"
+```
+Output nguyên văn từ `evidence/T9/test_agent_dedup.txt`:
+```text
+.2026-10-01 01:08:28 [WARNING] [ShipperAgent] Could not parse alert line: random unformatted log text
+.....2026-10-01 01:08:28 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Monitoring file: /tmp/tmp7527pt_q
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Target Ingestion URL: http://mock-api/telemetry
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Found alert file: /tmp/tmp7527pt_q. Attaching tail stream.
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Alert file rotated or truncated. Re-opening...
+/usr/local/lib/python3.11/threading.py:982: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp7527pt_q' mode='r' encoding='utf-8'>
+  self._target(*self._args, **self._kwargs)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.2026-10-01 01:08:28 [ERROR] [ShipperAgent] HTTP 422 Client Error (Unprocessable Entity). Dropping alert. Raw log: test raw log line
+2026-10-01 01:08:28 [WARNING] [ShipperAgent] Alert dropped for SID 1000001 due to client error (HTTP 4xx).
+.2026-10-01 01:08:28 [WARNING] [ShipperAgent] HTTP 500 Server Error (Internal Server Error). Will retry.
+2026-10-01 01:08:28 [WARNING] [ShipperAgent] Delivery failed for SID 1000002. Retrying in 0.0s...
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Forwarded alert [SID:1000002] 'Test Scan' from 10.0.0.1 to 10.0.0.2
+.2026-10-01 01:08:28 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Monitoring file: /tmp/tmpylamrh7j
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Target Ingestion URL: http://mock-api/telemetry
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Found alert file: /tmp/tmpylamrh7j. Attaching tail stream.
+..
+----------------------------------------------------------------------
+Ran 11 tests in 0.342s
+
+OK
+```
+
+#### 2. Chạy bộ unit test central database (`central/test_db.py`):
+```powershell
+cmd.exe /c "docker run --rm -v ""%cd%/central:/app"" -w /app mini-soc-lab-v2-soc-central python test_db.py > evidence\T9\test_db.txt 2>&1"
+```
+Output nguyên văn từ `evidence/T9/test_db.txt`:
+```text
+2026-10-01 01:08:10 [INFO] [IngestionAPI] Initialized SQLite database at :memory:
+test_01_check_connection (__main__.TestCentralDatabase.test_01_check_connection)
+Verify check_connection returns True for healthy database. ... ok
+test_02_upsert_sensor (__main__.TestCentralDatabase.test_02_upsert_sensor)
+Verify upsert_sensor inserts new sensor and updates last_seen on conflict. ... ok
+test_03_insert_raw_alert_and_query (__main__.TestCentralDatabase.test_03_insert_raw_alert_and_query)
+Verify inserting 1 alert and querying it back preserves all fields. ... ok
+test_04_duplicate_telemetry_id_not_inserted (__main__.TestCentralDatabase.test_04_duplicate_telemetry_id_not_inserted)
+Verify inserting duplicate telemetry_id does NOT increase row count (idempotence). ... ok
+test_05_stats_aggregation (__main__.TestCentralDatabase.test_05_stats_aggregation)
+Verify get_stats computes total_received, by_site, by_signature, and by_protocol. ... ok
+test_06_truncate_raw_alerts (__main__.TestCentralDatabase.test_06_truncate_raw_alerts)
+Verify truncate_raw_alerts clears all alerts and returns count. ... ok
+test_07_main_api_flow (__main__.TestCentralDatabase.test_07_main_api_flow)
+Verify main.py endpoints: health_check, ingest_telemetry, list_telemetry, clear_telemetry. ... 2026-10-01 01:08:10 [INFO] [IngestionAPI] INGESTED TELEMETRY [HQ] - SID:1000002 'TCP SYN Port Scan Detected' | TCP 172.22.0.2:44343 -> 172.22.0.3:11
+2026-10-01 01:08:10 [WARNING] [IngestionAPI] DANGEROUS OPERATION: Truncating raw_alerts table via DELETE /api/v1/telemetry
+2026-10-01 01:08:10 [INFO] [IngestionAPI] Cleared 1 telemetry records from PostgreSQL.
+ok
+test_08_ingest_telemetry_deduplication_same_telemetry_id (__main__.TestCentralDatabase.test_08_ingest_telemetry_deduplication_same_telemetry_id)
+Verify calling ingest_telemetry twice with identical telemetry_id results in exactly 1 row in raw_alerts. ... 2026-10-01 01:08:10 [INFO] [IngestionAPI] INGESTED TELEMETRY [HQ] - SID:1000001 'ICMP Flood Attack Detected' | ICMP 172.22.0.2:* -> 172.22.0.3:*
+2026-10-01 01:08:10 [WARNING] [IngestionAPI] Duplicate alert skipped: telemetry_id=test-dedup-uuid-12345
+ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.007s
+
+OK
+```
+
+### D. Kết quả kiểm thử
+| Test case | Trạng thái | Bằng chứng / Chi tiết |
+|---|---|---|
+| `test_deterministic_telemetry_id` | **PASS** | Gọi `parse_snort_alert` 2 lần cùng input sinh ra cùng `telemetry_id`; đổi log hoặc sensor cho ra ID khác (`evidence/T9/test_agent_dedup.txt`) |
+| `TestSnortAlertParser` (cũ + mới) | **PASS** | Đủ 6 parser test: ICMP, TCP scan, SSH brute force, Classification, Invalid lines, Deterministic UUIDv5 |
+| `TestTimestampAndMockHttp` | **PASS** | Đủ 5 test tích hợp HTTP mock: Future rollback, HTTP 422 dropped, HTTP 500 retry success, Tail line once, File truncation |
+| `test_08_ingest_telemetry_deduplication_same_telemetry_id` | **PASS** | Gửi cùng payload chứa `telemetry_id` 2 lần qua `ingest_telemetry`: lần 1 insert thành công, lần 2 log "Duplicate alert skipped", `total_received` giữ nguyên 1 (`evidence/T9/test_db.txt`) |
+| `test_01` -> `test_07` (Central) | **PASS** | Đầy đủ 7 test kiểm tra database CRUD, thống kê, kiểm tra kết nối, truncate (`evidence/T9/test_db.txt`) |
+
+### E. Chỗ làm khác so với yêu cầu và lý do
+* Không có thay đổi nào ngoài phạm vi yêu cầu. Toàn bộ 5 việc đều được triển khai chính xác theo đúng hướng dẫn kỹ thuật.
+
+### F. Giả định bạn tự đặt ra
+* Giả định: Dòng `raw_log` của Snort Fast Alert kết hợp với `sensor_id` (`f"{sensor_id}|{raw_log}"`) là khóa duy nhất và ổn định cho mỗi sự kiện alert. Vì Snort fast alert có timestamp chi tiết đến microsecond, xác suất 2 sự kiện khác nhau bị trùng lặp `sensor_id|raw_log` là cực kỳ thấp.
+
+### G. Những gì chưa kiểm chứng hoặc chưa làm
+* Chưa chạy `docker compose build` cho image `agent` và `soc-central` mới.
+* Chưa chạy `docker compose up` và chưa kết nối cơ sở dữ liệu PostgreSQL thực tế (sẽ thực hiện tại Chốt 2).
+* Chưa kiểm thử kịch bản agent gửi trùng trong môi trường nhiều luồng/nhiều container đồng thời tới PostgreSQL thật (sẽ kiểm thử tại Chốt 3).
+
+### H. Lỗi hoặc rủi ro phát hiện thêm (chỉ báo cáo)
+* Nếu sensor log có 2 sự kiện giống hệt nhau ở cùng một microsecond từ cùng một sensor (hiếm gặp trong Snort), cơ chế UUIDv5 sẽ coi sự kiện thứ hai là trùng lặp và bỏ qua. Trong bối cảnh bảo vệ chống bão log/retry lặp lại thì đây là hành vi chấp nhận được và mong muốn.
+
+### I. Điều cần tôi quyết định
+* Xác nhận hoàn thành khắc phục lỗi deduplication và quyết định chuyển sang **Chốt 2** (Khởi chạy PostgreSQL thực tế, build lại container và xác nhận kết nối).
+
+### J. Git
+* `git status --short`:
+  ```text
+   M PROGRESS.md
+   M agent/agent.py
+   M agent/test_agent.py
+   M attacker/Dockerfile
+   M central/main.py
+   M central/requirements.txt
+   M central/schemas.py
+   M docker-compose.yml
+  ?? .env.example
+  ?? attacker/demo_traffic.sh
+  ?? central/db.py
+  ?? central/test_db.py
+  ?? db/
+  ?? evidence/T9/
+  ?? evidence/network-split/
+  ```
+* `git log --oneline -5`:
+  ```text
+  1128ff5 T8 reviewed: agent, central, evidence, handoff docs
+  24bfc46 Initial commit: Mini-SOC Docker lab with 3 sensors
+  ```
+* `git remote -v`:
+  ```text
+  origin	https://github.com/soobinzinzin/mini-soc-dashboard.git (fetch)
+  origin	https://github.com/soobinzinzin/mini-soc-dashboard.git (push)
+  ```
+
+### K. Bước tiếp theo đề xuất (không tự làm)
+1. Người dùng xác nhận duyệt phần khắc phục lỗi `telemetry_id`.
+2. Tạo file `.env` tại thư mục gốc với dòng `POSTGRES_PASSWORD=<mat-khau-that>`.
+3. Chờ bạn phản hồi "TIẾP TỤC" để bước vào **Chốt 2**: Chạy `docker compose up -d --build` (hoặc build soc-central và agent), kiểm tra container `soc-postgres` khởi tạo bảng thành công, và gọi endpoint `/health` kiểm tra database kết nối tốt.
+
+---
+
+## BÁO CÁO: NGHIỆM THU TÍCH HỢP POSTGRESQL & KIỂM THỬ ĐỐI CHIẾU END-TO-END (CHỐT 2 & CHỐT 3)
+**Giờ hệ thống:** 2026-10-02 12:58:29 +07:00
+
+### A. Trạng thái từng việc
+* **Chốt 2 - Khởi động sạch & kiểm tra soc-postgres**: `DONE_VERIFIED` (12/12 containers Up, healthcheck healthy, DDL init 5 bảng thành công)
+* **Chốt 2 - Kiểm tra API /health**: `DONE_VERIFIED` (trả về status: healthy, database: ok)
+* **Chốt 3 - Phát sinh traffic tấn công qua 3 site**: `DONE_VERIFIED` (rải traffic qua attacker tới victim-hq, victim-serverfarm, victim-dmz, tổng n=40 alert > ngưỡng tối thiểu 30)
+* **Chốt 3 - Đối chiếu 1:1 giữa file alert và bảng raw_alerts**: `DONE_VERIFIED` (khớp chính xác 100% từng site, không thừa không thiếu)
+* **Chốt 3 - Kiểm chứng chống trùng lặp (deduplication)**: `DONE_VERIFIED` (gửi lại alert trùng, DB duy trì đúng n=40, không phát sinh bản ghi trùng)
+
+### B. Bằng chứng cụ thể
+* Bảng đối chiếu số lượng alert (n=40):
+
+| Site | Dòng mới trong file alert | Số dòng trong DB (`raw_alerts`) | Kết luận |
+| :--- | :---: | :---: | :---: |
+| **hq** | 19 | 19 | **PASS** |
+| **serverfarm** | 10 | 10 | **PASS** |
+| **dmz** | 11 | 11 | **PASS** |
+| **TỔNG CỘNG** | **40** | **40** | **PASS (100% KHỚP 1:1)** |
+
+* `curl.exe http://localhost:8000/health`:
+  `{"status":"healthy","service":"ingestion-api","database":"ok","timestamp":"2026-10-02T05:57:11.265581Z"}`
+* Query kiểm tra tính duy nhất `telemetry_id` trong PostgreSQL:
+  `SELECT COUNT(*) AS total_rows, COUNT(DISTINCT telemetry_id) AS distinct_telemetry_ids FROM raw_alerts;`
+  Kết quả: `total_rows = 40`, `distinct_telemetry_ids = 40`
+* Bảng `sensors` trong PostgreSQL:
+  - `sensor-dmz` (site: dmz): đã ghi nhận, `last_seen` cập nhật
+  - `sensor-hq` (site: hq): đã ghi nhận, `last_seen` cập nhật
+  - `sensor-serverfarm` (site: serverfarm): đã ghi nhận, `last_seen` cập nhật
+* File bằng chứng chi tiết: `evidence/T9/e2e_acceptance_test.txt`
+
+### C. Kết luận kỹ thuật
+* Quá trình chuyển đổi từ deque trong bộ nhớ sang PostgreSQL bền vững đã hoàn thành và hoạt động ổn định.
+* Cơ chế đọc file (tail) của agent, sinh UUIDv5 deterministically từ `sensor_id|raw_log`, forward qua REST API và ghi nhận với `ON CONFLICT (telemetry_id) DO NOTHING` vào PostgreSQL đảm bảo tính toàn vẹn dữ liệu (Idempotency).
+* Toàn bộ chuỗi vận hành: `Attacker -> Victim -> Snort Sensor -> Shipper Agent -> Central API -> PostgreSQL` vận hành chính xác 1:1 trên môi trường 4 mạng tách biệt (`net-hq`, `net-serverfarm`, `net-dmz`, `net-central`).
+
+### D. File đã thay đổi
+* `evidence/T9/e2e_acceptance_test.txt`: Tạo mới, lưu toàn bộ log output bài kiểm thử đối chiếu (5.163 bytes).
+* `PROGRESS.md`: Cập nhật báo cáo nghiệm thu theo mẫu A-K.
+
+### E. Số liệu đo lường
+* Cỡ mẫu alert kiểm thử: n = 40 (vượt mốc tối thiểu n ≥ 30 theo yêu cầu).
+* Tỷ lệ khớp số lượng file alert vs DB: 40/40 (100%).
+* Độ trễ tiếp nhận và chuyển tiếp: toàn bộ alert được agent gửi đến central và ghi DB trong vòng < 2 giây sau khi Snort phát hiện.
+* Số lượng container đang chạy: 12/12 containers Up.
+
+### F. Rủi ro còn lại
+* Hiện tại `raw_alerts` lưu trữ toàn văn alert thô (`raw_log`) và các trường trích xuất. Khi khối lượng alert tăng lên mức hàng trăm nghìn dòng/ngày, cần bổ sung chiến lược partitioning theo thời gian (`alert_timestamp`) hoặc vacuum định kỳ.
+
+### G. Chưa kiểm chứng
+* Bảng `incidents`, `notifications`, `admin_users` hiện vẫn để trống đúng theo thiết kế (chờ Alert Engine và Auth module ở các giai đoạn sau).
+* Kiểm thử khả năng phục hồi dữ liệu khi container `soc-postgres` bị crash đột ngột trong lúc đang nhận tải ghi đồng thời (stress test I/O).
+
+### H. Bước tiếp theo
+* Chờ chỉ đạo tiếp theo của Quản lý dự án để chuyển sang giai đoạn phát triển Alert Correlation Engine hoặc Web Dashboard.
+
+### I. Không thay đổi
+* KHÔNG chạy `git commit`, KHÔNG chạy `git push`.
+* Không sửa mã nguồn trong `agent/`, `sensor/`, `victim/`, `attacker/`.
+
+### J. Môi trường
+* OS: Windows 11, Docker Desktop (v29.8.0).
+* PostgreSQL: 15-alpine (`soc-postgres`).
+* Python: 3.11-slim, FastAPI, psycopg2-binary 2.9.13.
+
+### K. Ghi chú
+* Toàn bộ các kết luận đều dựa trên dữ liệu đo lường thực tế với cỡ mẫu n=40 cụ thể, không sử dụng các từ ngữ mang tính giả định hoặc phóng đại.

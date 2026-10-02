@@ -24,6 +24,7 @@ class TelemetryPayload(BaseModel):
     dst_ip: str = Field(..., description="Destination IP address")
     dst_port: Optional[int] = Field(default=None, description="Destination port number")
     raw_log: Optional[str] = Field(default=None, description="Original raw alert line")
+    telemetry_id: Optional[str] = Field(default=None, description="Deterministic telemetry ID from agent")
 
 
 class TelemetryResponse(BaseModel):

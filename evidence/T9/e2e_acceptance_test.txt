@@ -1,0 +1,59 @@
+﻿=== 1. DOCKER COMPOSE PS -A ===
+NAME                IMAGE                               COMMAND                  SERVICE             CREATED          STATUS                    PORTS
+agent-dmz           mini-soc-lab-v2-agent-dmz           "python agent.py"        agent-dmz           44 minutes ago   Up 44 minutes             
+agent-hq            mini-soc-lab-v2-agent-hq            "python agent.py"        agent-hq            44 minutes ago   Up 44 minutes             
+agent-serverfarm    mini-soc-lab-v2-agent-serverfarm    "python agent.py"        agent-serverfarm    44 minutes ago   Up 44 minutes             
+attacker            mini-soc-lab-v2-attacker            "sleep infinity"         attacker            44 minutes ago   Up 44 minutes             
+sensor-dmz          mini-soc-lab-v2-sensor-dmz          "snort -q -k none -câ€¦"   sensor-dmz          44 minutes ago   Up 44 minutes             
+sensor-hq           mini-soc-lab-v2-sensor-hq           "snort -q -k none -câ€¦"   sensor-hq           44 minutes ago   Up 44 minutes             
+sensor-serverfarm   mini-soc-lab-v2-sensor-serverfarm   "snort -q -k none -câ€¦"   sensor-serverfarm   44 minutes ago   Up 44 minutes             
+soc-central         mini-soc-lab-v2-soc-central         "uvicorn main:app --â€¦"   soc-central         44 minutes ago   Up 44 minutes             127.0.0.1:8000->8000/tcp
+soc-postgres        postgres:15-alpine                  "docker-entrypoint.sâ€¦"   postgres            44 minutes ago   Up 44 minutes (healthy)   5432/tcp
+victim-dmz          mini-soc-lab-v2-victim-dmz          "/bin/sh -c 'serviceâ€¦"   victim-dmz          44 minutes ago   Up 44 minutes             22/tcp, 80/tcp
+victim-hq           mini-soc-lab-v2-victim-hq           "/bin/sh -c 'serviceâ€¦"   victim-hq           44 minutes ago   Up 44 minutes             22/tcp, 80/tcp
+victim-serverfarm   mini-soc-lab-v2-victim-serverfarm   "/bin/sh -c 'serviceâ€¦"   victim-serverfarm   44 minutes ago   Up 44 minutes             22/tcp, 80/tcp
+
+=== 2. HEALTH ENDPOINT ===
+{"status":"healthy","service":"ingestion-api","database":"ok","timestamp":"2026-10-02T05:57:53.364685Z"}
+
+
+=== 3. ALERT LOG FILE LINE COUNTS ===
+hq : 19 lines in logs\hq\alert
+serverfarm : 10 lines in logs\serverfarm\alert
+dmz : 11 lines in logs\dmz\alert
+
+=== 4. POSTGRESQL RAW_ALERTS BY SITE ===
+    site    | count 
+------------+-------
+ dmz        |    11
+ hq         |    19
+ serverfarm |    10
+(3 rows)
+
+
+=== 5. POSTGRESQL TOTAL RAW_ALERTS ===
+ total 
+-------
+    40
+(1 row)
+
+
+=== 6. API STATS ===
+{"total_received":40,"by_site":{"dmz":11,"hq":19,"serverfarm":10},"by_signature":{"TCP SYN Port Scan Detected":21,"SSH Brute Force Attempt":5,"ICMP Flood Attack Detected":14},"by_protocol":{"ICMP":14,"TCP":26}}
+
+
+=== 7. SENSORS TABLE ===
+     sensor_id     |    site    |          first_seen           |           last_seen           
+-------------------+------------+-------------------------------+-------------------------------
+ sensor-dmz        | dmz        | 2026-10-02 05:16:10.184525+00 | 2026-10-02 05:57:36.411603+00
+ sensor-hq         | hq         | 2026-10-02 05:15:51.031953+00 | 2026-10-02 05:21:48.976276+00
+ sensor-serverfarm | serverfarm | 2026-10-02 05:15:59.341671+00 | 2026-10-02 05:21:44.220872+00
+(3 rows)
+
+
+=== 8. TELEMETRY SAMPLE (LIMIT 3) ===
+[{"telemetry_id":"d46f2265-d6cf-5791-859f-56ec341195da","sensor_id":"sensor-dmz","site":"dmz","gid":1,"sid":1000002,"rev":2,"signature":"TCP SYN Port Scan Detected","classification":null,"priority":0,"protocol":"TCP","src_ip":"172.19.0.3","src_port":42146,"dst_ip":"172.19.0.2","dst_port":110,"raw_log":"10/02-05:21:58.875976  [**] [1:1000002:2] TCP SYN Port Scan Detected [**] [Priority: 0] {TCP} 172.19.0.3:42146 -> 172.19.0.2:110","timestamp":"2026-10-02T05:21:58.875976+00:00","received_at":"2026-10-02T05:21:59.091680+00:00"},{"telemetry_id":"7ddc9c19-81cf-595a-9b97-b5cb51459111","sensor_id":"sensor-dmz","site":"dmz","gid":1,"sid":1000001,"rev":2,"signature":"ICMP Flood Attack Detected","classification":null,"priority":0,"protocol":"ICMP","src_ip":"172.19.0.3","src_port":null,"dst_ip":"172.19.0.2","dst_port":null,"raw_log":"10/02-05:21:55.833624  [**] [1:1000001:2] ICMP Flood Attack Detected [**] [Priority: 0] {ICMP} 172.19.0.3 -> 172.19.0.2","timestamp":"2026-10-02T05:21:55.833624+00:00","received_at":"2026-10-02T05:21:57.046830+00:00"},{"telemetry_id":"8c20f3b0-355c-5695-acc8-0108d187c5d0","sensor_id":"sensor-dmz","site":"dmz","gid":1,"sid":1000002,"rev":2,"signature":"TCP SYN Port Scan Detected","classification":null,"priority":0,"protocol":"TCP","src_ip":"172.19.0.3","src_port":49602,"dst_ip":"172.19.0.2","dst_port":445,"raw_log":"10/02-05:21:53.951853  [**] [1:1000002:2] TCP SYN Port Scan Detected [**] [Priority: 0] {TCP} 172.19.0.3:49602 -> 172.19.0.2:445","timestamp":"2026-10-02T05:21:53.951853+00:00","received_at":"2026-10-02T05:21:54.025231+00:00"}]
+
+=== 9. RE-SEND DUPLICATE TEST ===
+Re-sending telemetry_id d46f2265-d6cf-5791-859f-56ec341195da resulted in total count remaining at 40 (ON CONFLICT DO NOTHING verified).
+

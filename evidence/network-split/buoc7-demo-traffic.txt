@@ -1,0 +1,26 @@
+=== Site HQ: SYN Port Scan ===
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-09-30 02:56 +0000
+Nmap scan report for victim-hq (172.22.0.3)
+Host is up (0.0000060s latency).
+rDNS record for 172.22.0.3: victim-hq.mini-soc-lab-v2_net-hq
+Not shown: 98 closed tcp ports (reset)
+PORT   STATE SERVICE
+22/tcp open  ssh
+80/tcp open  http
+MAC Address: 5E:CE:C4:6B:5E:E9 (Unknown)
+
+Nmap done: 1 IP address (1 host up) scanned in 0.65 seconds
+=== Site Server Farm: ICMP Flood ===
+PING victim-serverfarm (172.19.0.3) 56(84) bytes of data.
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+--- victim-serverfarm ping statistics ---
+200 packets transmitted, 200 received, 0% packet loss, time 2ms
+rtt min/avg/max/mdev = 0.004/0.008/0.126/0.009 ms, ipg/ewma 0.008/0.008 ms
+=== Site DMZ: SSH Brute Force ===
+Hydra v9.7 (c) 2023 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).
+
+Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2026-09-30 02:57:00
+[DATA] max 4 tasks per 1 server, overall 4 tasks, 14344399 login tries (l:1/p:14344399), ~3586100 tries per task
+[DATA] attacking ssh://victim-dmz:22/
+The session file ./hydra.restore was written. Type "hydra -R" to resume session.
+=== Xong, kiá»ƒm tra dashboard hoáº·c curl http://localhost:8000/api/v1/telemetry?limit=10 ===

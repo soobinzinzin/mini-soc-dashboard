@@ -6,6 +6,9 @@ alert
 
 # Environment and sensitive data
 .env
+pass.env
+*.env
+!.env.example
 .venv/
 env/
 __pycache__/

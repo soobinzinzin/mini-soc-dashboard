@@ -1,0 +1,9 @@
+NETWORK ID     NAME                             DRIVER    SCOPE
+cb108183edef   bridge                           bridge    local
+c62e0370ab67   host                             host      local
+046d8f263af8   mini-soc-lab-v2_net-central      bridge    local
+6c8618751fb1   mini-soc-lab-v2_net-dmz          bridge    local
+764c385a80ac   mini-soc-lab-v2_net-hq           bridge    local
+fabd19574f0e   mini-soc-lab-v2_net-serverfarm   bridge    local
+cc3d346af933   mini-soc-lab_minisoc-net         bridge    local
+0437fe91ab3c   none                             null      local

@@ -1,13 +1,44 @@
 networks:
-  minisoc-net:
+  net-hq:
+    driver: bridge
+  net-serverfarm:
+    driver: bridge
+  net-dmz:
+    driver: bridge
+  net-central:
     driver: bridge
 
+volumes:
+  pgdata:
+
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: soc-postgres
+    networks:
+      - net-central
+    environment:
+      - POSTGRES_DB=minisoc
+      - POSTGRES_USER=minisoc
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U minisoc -d minisoc"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   attacker:
     build: ./attacker
     container_name: attacker
     networks:
-      - minisoc-net
+      - net-hq
+      - net-serverfarm
+      - net-dmz
     tty: true
 
   # ---------- Site A: Headquarters ----------
@@ -15,7 +46,7 @@ services:
     build: ./victim
     container_name: victim-hq
     networks:
-      - minisoc-net
+      - net-hq
     cap_add:
       - NET_ADMIN
 
@@ -36,7 +67,7 @@ services:
     build: ./victim
     container_name: victim-serverfarm
     networks:
-      - minisoc-net
+      - net-serverfarm
     cap_add:
       - NET_ADMIN
 
@@ -57,7 +88,7 @@ services:
     build: ./victim
     container_name: victim-dmz
     networks:
-      - minisoc-net
+      - net-dmz
     cap_add:
       - NET_ADMIN
 
@@ -80,7 +111,12 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     networks:
-      - minisoc-net
+      - net-central
+    environment:
+      - DATABASE_URL=postgresql://minisoc:${POSTGRES_PASSWORD}@soc-postgres:5432/minisoc
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   # ---------- Telemetry Forwarding Agents ----------
@@ -88,7 +124,7 @@ services:
     build: ./agent
     container_name: agent-hq
     networks:
-      - minisoc-net
+      - net-central
     environment:
       - INGESTION_URL=http://soc-central:8000/api/v1/telemetry
       - SENSOR_ID=sensor-hq
@@ -104,7 +140,7 @@ services:
     build: ./agent
     container_name: agent-serverfarm
     networks:
-      - minisoc-net
+      - net-central
     environment:
       - INGESTION_URL=http://soc-central:8000/api/v1/telemetry
       - SENSOR_ID=sensor-serverfarm
@@ -120,7 +156,7 @@ services:
     build: ./agent
     container_name: agent-dmz
     networks:
-      - minisoc-net
+      - net-central
     environment:
       - INGESTION_URL=http://soc-central:8000/api/v1/telemetry
       - SENSOR_ID=sensor-dmz

@@ -11,6 +11,7 @@ import sys
 import time
 import json
 import logging
+import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any, Tuple
 import urllib.request
@@ -106,7 +107,11 @@ def parse_snort_alert(line: str, sensor_id: str = SENSOR_ID, site: str = SENSOR_
     data = match.groupdict()
     timestamp_iso = parse_timestamp_to_iso(data["timestamp"], now=now)
 
+    # Deterministic telemetry_id based on sensor_id and raw_log (stable across retries)
+    telemetry_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, f"{sensor_id}|{line}"))
+
     payload = {
+        "telemetry_id": telemetry_id,
         "timestamp": timestamp_iso,
         "sensor_id": sensor_id,
         "site": site,

@@ -1,0 +1,11 @@
+=== Lệnh theo yêu cầu: docker exec attacker python3 -c "import urllib.request; print(urllib.request.urlopen('http://soc-central:8000/health', timeout=3).getcode())" ===
+OCI runtime exec failed: exec failed: unable to start container process: exec: "python3": executable file not found in $PATH
+
+=== Bổ sung kiểm chứng mạng bằng công cụ có sẵn (ping): docker exec attacker ping -c 2 -W 3 soc-central ===
+ping: soc-central: Temporary failure in name resolution
+
+=== Bổ sung kiểm chứng mạng bằng công cụ có sẵn (nmap): docker exec attacker nmap -p 8000 soc-central ===
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-09-30 03:07 +0000
+Failed to resolve "soc-central".
+WARNING: No targets were specified, so 0 hosts scanned.
+Nmap done: 0 IP addresses (0 hosts up) scanned in 12.52 seconds

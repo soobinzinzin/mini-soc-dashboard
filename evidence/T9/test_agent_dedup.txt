@@ -1,0 +1,23 @@
+.2026-10-01 01:08:28 [WARNING] [ShipperAgent] Could not parse alert line: random unformatted log text
+.....2026-10-01 01:08:28 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Monitoring file: /tmp/tmp7527pt_q
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Target Ingestion URL: http://mock-api/telemetry
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Found alert file: /tmp/tmp7527pt_q. Attaching tail stream.
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Alert file rotated or truncated. Re-opening...
+/usr/local/lib/python3.11/threading.py:982: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp7527pt_q' mode='r' encoding='utf-8'>
+  self._target(*self._args, **self._kwargs)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.2026-10-01 01:08:28 [ERROR] [ShipperAgent] HTTP 422 Client Error (Unprocessable Entity). Dropping alert. Raw log: test raw log line
+2026-10-01 01:08:28 [WARNING] [ShipperAgent] Alert dropped for SID 1000001 due to client error (HTTP 4xx).
+.2026-10-01 01:08:28 [WARNING] [ShipperAgent] HTTP 500 Server Error (Internal Server Error). Will retry.
+2026-10-01 01:08:28 [WARNING] [ShipperAgent] Delivery failed for SID 1000002. Retrying in 0.0s...
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Forwarded alert [SID:1000002] 'Test Scan' from 10.0.0.1 to 10.0.0.2
+.2026-10-01 01:08:28 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Monitoring file: /tmp/tmpylamrh7j
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Target Ingestion URL: http://mock-api/telemetry
+2026-10-01 01:08:28 [INFO] [ShipperAgent] Found alert file: /tmp/tmpylamrh7j. Attaching tail stream.
+..
+----------------------------------------------------------------------
+Ran 11 tests in 0.342s
+
+OK

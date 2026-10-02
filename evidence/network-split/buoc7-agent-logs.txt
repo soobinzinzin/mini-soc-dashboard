@@ -1,0 +1,20 @@
+=== docker logs agent-hq --tail 5 === 
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Monitoring file: /var/log/snort/alert
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Target Ingestion URL: http://soc-central:8000/api/v1/telemetry
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Found alert file: /var/log/snort/alert. Attaching tail stream.
+2026-09-30 02:56:45 [INFO] [ShipperAgent] Forwarded alert [SID:1000002] 'TCP SYN Port Scan Detected' from 172.22.0.2 to 172.22.0.3
+ 
+=== docker logs agent-serverfarm --tail 5 === 
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-serverfarm] (Site: serverfarm)
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Monitoring file: /var/log/snort/alert
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Target Ingestion URL: http://soc-central:8000/api/v1/telemetry
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Found alert file: /var/log/snort/alert. Attaching tail stream.
+2026-09-30 02:56:53 [INFO] [ShipperAgent] Forwarded alert [SID:1000001] 'ICMP Flood Attack Detected' from 172.19.0.2 to 172.19.0.3
+ 
+=== docker logs agent-dmz --tail 5 === 
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-dmz] (Site: dmz)
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Monitoring file: /var/log/snort/alert
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Target Ingestion URL: http://soc-central:8000/api/v1/telemetry
+2026-09-30 02:09:15 [INFO] [ShipperAgent] Found alert file: /var/log/snort/alert. Attaching tail stream.
+2026-09-30 02:57:03 [INFO] [ShipperAgent] Forwarded alert [SID:1000003] 'SSH Brute Force Attempt' from 172.20.0.2 to 172.20.0.3
