@@ -1,0 +1,52 @@
+
+INFO:IngestionAPI.DB:Initialized SQLite database at :memory:
+test_already_closed_not_affected (test_correlation.TestCloseStaleIncidents.test_already_closed_not_affected)
+An already-closed incident should not be re-closed or affected. ... ok
+test_close_stale_after_window (test_correlation.TestCloseStaleIncidents.test_close_stale_after_window)
+Create an incident with last_alert_at in the past (> 10 seconds ago). ... INFO:IngestionAPI.Correlation:Closed 1 stale incident(s).
+ok
+test_recent_incident_stays_open (test_correlation.TestCloseStaleIncidents.test_recent_incident_stays_open)
+An incident with last_alert_at within the last 10 seconds ... ok
+INFO:IngestionAPI.DB:Initialized SQLite database at :memory:
+test_different_site_creates_separate_incidents (test_correlation.TestCorrelation.test_different_site_creates_separate_incidents)
+Alerts with same (sid, src_ip) but different site within 10s ... INFO:IngestionAPI.Correlation:NEW incident #1 created [hq/1000002/10.0.0.1] severity=high
+INFO:IngestionAPI.Correlation:NEW incident #2 created [dmz/1000002/10.0.0.1] severity=high
+ok
+test_different_src_ip_creates_separate_incidents (test_correlation.TestCorrelation.test_different_src_ip_creates_separate_incidents)
+Alerts with same (site, sid) but different src_ip within 10s ... INFO:IngestionAPI.Correlation:NEW incident #3 created [hq/1000002/10.0.0.1] severity=high
+INFO:IngestionAPI.Correlation:NEW incident #4 created [hq/1000002/10.0.0.2] severity=high
+ok
+test_icmp_flood_severity (test_correlation.TestCorrelation.test_icmp_flood_severity)
+SID 1000001 should map to 'medium'. ... INFO:IngestionAPI.Correlation:NEW incident #5 created [hq/1000001/10.0.0.1] severity=medium
+ok
+test_sliding_window_extends (test_correlation.TestCorrelation.test_sliding_window_extends)
+Sliding window: a1 at T+0, a2 at T+8, a3 at T+16. ... INFO:IngestionAPI.Correlation:NEW incident #6 created [hq/1000002/10.0.0.1] severity=high
+INFO:IngestionAPI.Correlation:CORRELATED alert into incident #6 [hq/1000002] alert_count=2
+INFO:IngestionAPI.Correlation:CORRELATED alert into incident #6 [hq/1000002] alert_count=3
+ok
+test_ssh_brute_force_severity (test_correlation.TestCorrelation.test_ssh_brute_force_severity)
+SID 1000003 should map to 'critical'. ... INFO:IngestionAPI.Correlation:NEW incident #7 created [hq/1000003/10.0.0.1] severity=critical
+ok
+test_three_alerts_within_10s_create_one_incident (test_correlation.TestCorrelation.test_three_alerts_within_10s_create_one_incident)
+3 alerts with same (site, sid, src_ip) within 10 seconds ... INFO:IngestionAPI.Correlation:NEW incident #8 created [hq/1000002/10.0.0.1] severity=high
+INFO:IngestionAPI.Correlation:CORRELATED alert into incident #8 [hq/1000002] alert_count=2
+INFO:IngestionAPI.Correlation:CORRELATED alert into incident #8 [hq/1000002] alert_count=3
+ok
+test_two_alerts_more_than_10s_apart_create_two_incidents (test_correlation.TestCorrelation.test_two_alerts_more_than_10s_apart_create_two_incidents)
+2 alerts with same (site, sid, src_ip) but more than 10 seconds apart ... INFO:IngestionAPI.Correlation:NEW incident #9 created [hq/1000002/10.0.0.1] severity=high
+INFO:IngestionAPI.Correlation:NEW incident #10 created [hq/1000002/10.0.0.1] severity=high
+ok
+test_unknown_sid_gets_low_severity (test_correlation.TestCorrelation.test_unknown_sid_gets_low_severity)
+Alert with SID not in SEVERITY_MAP should create incident with severity='low'. ... ok
+test_icmp_flood_is_medium (test_correlation.TestGetSeverity.test_icmp_flood_is_medium) ... ok
+test_ssh_brute_force_is_critical (test_correlation.TestGetSeverity.test_ssh_brute_force_is_critical) ... ok
+test_syn_scan_is_high (test_correlation.TestGetSeverity.test_syn_scan_is_high) ... ok
+test_unknown_sid_is_low_with_warning (test_correlation.TestGetSeverity.test_unknown_sid_is_low_with_warning) ... ok
+INFO:IngestionAPI.DB:Initialized SQLite database at :memory:
+test_stats_counts_correctly (test_correlation.TestIncidentStats.test_stats_counts_correctly)
+Verify stats counts by severity and status. ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.008s
+
+OK

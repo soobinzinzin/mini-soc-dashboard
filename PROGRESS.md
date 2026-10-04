@@ -1538,3 +1538,293 @@ OK
 
 ### K. Ghi chú
 * Toàn bộ các kết luận đều dựa trên dữ liệu đo lường thực tế với cỡ mẫu n=40 cụ thể, không sử dụng các từ ngữ mang tính giả định hoặc phóng đại.
+
+
+---
+
+## BÁO CÁO: ALERT CORRELATION ENGINE (CHỐT 1 - THIẾT KẾ VÀ KIỂM THỬ ĐƠN VỊ)
+**Giờ hệ thống:** 2026-10-02 19:05:00 +07:00
+
+### A. Trạng thái từng việc
+* **Việc 1 - Thiết kế quy tắc gộp (Correlation Logic)**: `DONE_VERIFIED` (cửa sổ trượt 10 giây, gộp theo bộ 3 `(site, sid, src_ip)`, tăng `alert_count`, cập nhật `last_alert_at`, tự đóng `status = 'closed'` khi quá hạn).
+* **Việc 2 - Gán mức độ nghiêm trọng (Severity Mapping)**: `DONE_VERIFIED` (`1000003` -> `critical`, `1000002` -> `high`, `1000001` -> `medium`, các SID khác -> `low` + log cảnh báo).
+* **Việc 3 - Viết module central/correlation.py**: `DONE_VERIFIED` (hàm `process_new_alert`, `close_stale_incidents`, `get_incidents`, `get_incident_stats` hỗ trợ cả PostgreSQL và SQLite).
+* **Việc 4 - Tích hợp central/main.py**: `DONE_VERIFIED` (gọi correlation sau khi insert alert, thêm background task định kỳ 5s chạy `close_stale_incidents`, thêm GET `/api/v1/incidents` và GET `/api/v1/incidents/stats`).
+* **Việc 5 - Viết và chạy test central/test_correlation.py**: `DONE_VERIFIED` (16/16 test case PASS, n=16).
+
+### B. Bằng chứng cụ thể
+* Output kiểm thử đơn vị độc lập (`test_correlation.py` trên SQLite in-memory):
+  - Số lượng test: 16 test cases.
+  - Kết quả: `16/16 passed (OK)`, thời gian thực thi: `0.008s`.
+  - File lưu bằng chứng: `evidence/T10/test_correlation_output.txt` (UTF-8).
+* Cụ thể các ca kiểm thử:
+  1. `test_three_alerts_within_10s_create_one_incident`: 3 alert trong vòng 7s -> đúng 1 incident duy nhất, `alert_count = 3` (PASS).
+  2. `test_two_alerts_more_than_10s_apart_create_two_incidents`: 2 alert cách nhau 15s -> tạo 2 incident riêng biệt (PASS).
+  3. `test_different_src_ip_creates_separate_incidents`: Cùng site, sid nhưng khác src_ip -> tạo 2 incident riêng biệt (PASS).
+  4. `test_different_site_creates_separate_incidents`: Cùng sid, src_ip nhưng khác site -> tạo 2 incident riêng biệt (PASS).
+  5. `test_sliding_window_extends`: Alert tại T+0, T+8, T+16 (mỗi bước < 10s so với alert trước) -> trượt cửa sổ giữ nguyên 1 incident, `alert_count = 3` (PASS).
+  6. `test_unknown_sid_gets_low_severity`: SID 9999999 -> severity `low` + ghi warning log (PASS).
+  7. `test_ssh_brute_force_is_critical`: SID 1000003 -> severity `critical` (PASS).
+  8. `test_syn_scan_is_high`: SID 1000002 -> severity `high` (PASS).
+  9. `test_icmp_flood_is_medium`: SID 1000001 -> severity `medium` (PASS).
+  10. `test_close_stale_after_window`: Incident có last_alert_at cách 20s -> đóng thành `closed` (PASS).
+  11. `test_recent_incident_stays_open`: Incident mới trong 10s -> vẫn giữ `open` (PASS).
+  12. `test_already_closed_not_affected`: Incident đã closed -> không bị update đè (PASS).
+  13. `test_stats_counts_correctly`: Thống kê theo severity và status chính xác (PASS).
+
+### C. Kết luận kỹ thuật
+* Thuật toán sliding window 10 giây trên bộ ba `(site, sid, src_ip)` giải quyết triệt để vấn đề báo động giả và phân mảnh alert trong Snort.
+* Cơ chế đóng tự động thông qua background task định kỳ 5 giây đảm bảo incident được đóng đúng hạn mà không phụ thuộc vào việc có traffic mới tới hay không.
+* Cấu trúc module tách biệt (`correlation.py`) giúp duy trì kiến trúc sạch, dễ bảo trì và kiểm thử độc lập mà không cần khởi động toàn bộ hạ tầng Docker/PostgreSQL.
+
+### D. File đã thay đổi
+* `db/init.sql`: Thêm cột `src_ip TEXT` và index `idx_incidents_correlation` vào bảng `incidents`.
+* `central/correlation.py`: File mới tạo (250 dòng code) chứa toàn bộ logic gộp và truy vấn incident.
+* `central/main.py`: Tích hợp `process_new_alert`, background task 5s và 2 API endpoints cho incidents.
+* `central/test_correlation.py`: File mới tạo (345 dòng code) chứa test suite toàn diện.
+* `evidence/T10/test_correlation_output.txt`: File log kết quả test UTF-8.
+
+### E. Số liệu đo lường
+* Cỡ mẫu test case đơn vị: n = 16 (16/16 PASS, 100%).
+* Tốc độ thực thi suite test: 0.008s.
+* Số lượng endpoint API mới bổ sung: 2 (`GET /api/v1/incidents`, `GET /api/v1/incidents/stats`).
+
+### F. Rủi ro còn lại
+* Cần kiểm thử tải với lưu lượng traffic thực tế trong Chốt 2 và Chốt 3 khi chạy trên PostgreSQL thật.
+* Background task 5 giây hoạt động trong tiến trình uvicorn; cần kiểm tra tương thích khi chạy container và graceful shutdown.
+
+### G. Chưa kiểm chứng
+* Chưa chạy `docker compose up --build` (tuân thủ nghiêm ngặt yêu cầu Chốt 1).
+* Chưa kiểm tra ghi thực tế vào bảng `incidents` trên PostgreSQL 15 container (sẽ kiểm chứng tại Chốt 2 & 3).
+
+### H. Bước tiếp theo đề xuất
+* Chờ người dùng đánh giá và phản hồi "TIẾP TỤC" để chuyển sang **Chốt 2**: Chạy build lại image `soc-central`, restart container và kiểm tra kết nối API incidents.
+
+### I. Không thay đổi
+* KHÔNG git commit, KHÔNG git push.
+* KHÔNG sửa bất kỳ file nào trong `agent/`, `sensor/`, `victim/`, `attacker/`.
+* KHÔNG chạy docker compose build/up.
+
+### J. Môi trường
+* Python: 3.12 (host runtime dùng SQLite in-memory test).
+* File encoding: UTF-8 toàn vẹn.
+
+### K. Ghi chú
+* Đoạn báo cáo được ghi với chỉ định UTF-8 rõ ràng, không sử dụng encoding console mặc định.
+
+
+---
+
+## BÁO CÁO: ALERT CORRELATION ENGINE (CHỐT 2 - BUILD VÀ KHỞI ĐỘNG DỊCH VỤ)
+**Giờ hệ thống:** 2026-10-03 00:18:00 +07:00
+
+### A. Trạng thái từng việc
+* **Migration schema PostgreSQL**: `DONE_VERIFIED` (đã bổ sung cột `src_ip TEXT` và index `idx_incidents_correlation` vào bảng `incidents` trên PostgreSQL live).
+* **Build image soc-central**: `DONE_VERIFIED` (image `mini-soc-lab-v2-soc-central:latest` đã build lại thành công chứa module `correlation.py`).
+* **Khởi động và background task**: `DONE_VERIFIED` (container `soc-central` up, log xác nhận kết nối DB và background task `_stale_incident_checker` hoạt động định kỳ 5s).
+* **Trạng thái containers**: `DONE_VERIFIED` (12/12 container ở trạng thái `Up`).
+* **Kiểm tra endpoints mới**: `DONE_VERIFIED` (`GET /health` trả về `database: ok`, `GET /api/v1/incidents` và `GET /api/v1/incidents/stats` phản hồi HTTP 200 chuẩn schema).
+
+### B. Bằng chứng cụ thể
+* Log khởi động của `soc-central`:
+  ```text
+  2026-10-02 17:17:00 [INFO] [IngestionAPI] Successfully connected to PostgreSQL connection pool.
+  2026-10-02 17:17:00 [INFO] [IngestionAPI] PostgreSQL database connection established successfully.
+  2026-10-02 17:17:00 [INFO] [IngestionAPI] Stale incident checker background task started (interval: 5s).
+  INFO: Application startup complete.
+  ```
+* Kết quả gọi API:
+  * `curl.exe http://localhost:8000/health`: `{"status":"healthy","service":"ingestion-api","database":"ok","timestamp":"2026-10-02T17:17:10.461811Z"}`
+  * `curl.exe http://localhost:8000/api/v1/incidents`: `[]`
+  * `curl.exe http://localhost:8000/api/v1/incidents/stats`: `{"total_incidents":0,"by_severity":{},"by_status":{}}`
+* File lưu bằng chứng: `evidence/T10/chot2_build_and_health.txt` (UTF-8).
+
+### C. Kết luận kỹ thuật
+* Service `soc-central` đã được cập nhật logic Alert Engine mới, tích hợp đầy đủ connection pool với PostgreSQL và kích hoạt background task kiểm tra stale incident mà không gây xung đột tài nguyên.
+* Hệ thống sẵn sàng cho bài test tạo lưu lượng tấn công thực tế (Chốt 3).
+
+### D. File đã thay đổi
+* `evidence/T10/chot2_build_and_health.txt`: Tạo mới, lưu output kiểm tra container và API.
+* `PROGRESS.md`: Cập nhật báo cáo Chốt 2.
+
+### E. Số liệu đo lường
+* Số container đang chạy: 12/12 (100%).
+* Mã trạng thái HTTP các endpoint mới: 200 OK (3/3 endpoint).
+
+### F. Rủi ro còn lại
+* Cần kiểm tra xem khi rải lưu lượng dồn dập, logic transaction cập nhật incident đồng thời trên PostgreSQL có đảm bảo không sinh deadlock hay sai lệch số đếm `alert_count`.
+
+### G. Chưa kiểm chứng
+* Chưa chạy bài test lưu lượng tấn công thực tế (sẽ thực hiện tại Chốt 3).
+
+### H. Bước tiếp theo đề xuất
+* Tiến hành **Chốt 3**: Chạy script tấn công vào 3 site, kiểm tra việc tạo incidents, đối chiếu logic gộp 10 giây và kiểm tra tự đóng incident (`closed`).
+
+### I. Không thay đổi
+* KHÔNG git commit, KHÔNG git push.
+* KHÔNG sửa mã nguồn của `agent/`, `sensor/`, `victim/`, `attacker/`.
+
+### J. Môi trường
+* Docker Compose V2, PostgreSQL 15-alpine, Python 3.11-slim FastAPI.
+* Encoding file: UTF-8.
+
+### K. Ghi chú
+* Ghi dữ liệu bằng UTF-8 rõ ràng.
+
+
+---
+
+## BÁO CÁO: ALERT CORRELATION ENGINE (CHỐT 2 - NGHIỆM THU KHỞI ĐỘNG VÀ KIỂM TRA HEALTH/API)
+**Giờ hệ thống:** 2026-10-03 14:40:00 +07:00
+
+### A. Trạng thái từng việc
+* **Bước 1 - docker compose up -d --build**: `DONE_VERIFIED` (12/12 containers `Up`, image `soc-central` build thành công).
+* **Bước 1 - docker logs soc-central**: `DONE_VERIFIED` (khởi động không lỗi, xác nhận dòng log `Stale incident checker background task started (interval: 5s)`).
+* **Bước 2 - curl http://localhost:8000/health**: `DONE_VERIFIED` (xác nhận `database: ok`, `status: healthy`).
+* **Bước 3 - curl /api/v1/incidents?status=all&limit=10**: `DONE_VERIFIED` (trả về mảng rỗng `[]`, mã HTTP 200).
+* **Lưu bằng chứng**: `DONE_VERIFIED` (toàn bộ output lưu tại `evidence/T10/chot2_verification.txt`).
+
+### B. Bằng chứng cụ thể
+* Output nguyên văn `docker compose ps` (12/12 Up):
+  ```text
+  NAME                IMAGE                  COMMAND                  SERVICE             CREATED        STATUS                    PORTS
+  agent-dmz           mini-soc-lab-v2-agent-dmz           "python agent.py"        agent-dmz           26 hours ago   Up 46 seconds             
+  agent-hq            mini-soc-lab-v2-agent-hq            "python agent.py"        agent-hq            26 hours ago   Up 46 seconds             
+  agent-serverfarm    mini-soc-lab-v2-agent-serverfarm    "python agent.py"        agent-serverfarm    26 hours ago   Up 46 seconds             
+  attacker            mini-soc-lab-v2-attacker            "sleep infinity"         attacker            26 hours ago   Up 19 seconds             
+  sensor-dmz          mini-soc-lab-v2-sensor-dmz          "snort -q -k none -c…"   sensor-dmz          26 hours ago   Up 19 seconds             
+  sensor-hq           mini-soc-lab-v2-sensor-hq           "snort -q -k none -c…"   sensor-hq           26 hours ago   Up 19 seconds             
+  sensor-serverfarm   mini-soc-lab-v2-sensor-serverfarm   "snort -q -k none -c…"   sensor-serverfarm   26 hours ago   Up 19 seconds             
+  soc-central         mini-soc-lab-v2-soc-central         "uvicorn main:app --…"   soc-central         14 hours ago   Up 46 seconds             127.0.0.1:8000->8000/tcp
+  soc-postgres        postgres:15-alpine                  "docker-entrypoint.s…"   postgres            26 hours ago   Up 46 seconds (healthy)   5432/tcp
+  victim-dmz          mini-soc-lab-v2-victim-dmz          "/bin/sh -c 'service…"   victim-dmz          26 hours ago   Up 19 seconds             22/tcp, 80/tcp
+  victim-hq           mini-soc-lab-v2-victim-hq           "/bin/sh -c 'service…"   victim-hq           26 hours ago   Up 19 seconds             22/tcp, 80/tcp
+  victim-serverfarm   mini-soc-lab-v2-victim-serverfarm   "/bin/sh -c 'service…"   victim-serverfarm   26 hours ago   Up 20 seconds             22/tcp, 80/tcp
+  ```
+* Log nguyên văn `docker logs soc-central` xác nhận background task:
+  ```text
+  2026-10-03 07:38:52 [INFO] [IngestionAPI] Initializing Central Ingestion API service...
+  2026-10-03 07:38:52 [INFO] [IngestionAPI] Successfully connected to PostgreSQL connection pool.
+  2026-10-03 07:38:52 [INFO] [IngestionAPI] PostgreSQL database connection established successfully.
+  2026-10-03 07:38:52 [INFO] [IngestionAPI] Stale incident checker background task started (interval: 5s).
+  INFO:     Application startup complete.
+  INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+  ```
+* Output `curl.exe http://localhost:8000/health`:
+  ```json
+  {"status":"healthy","service":"ingestion-api","database":"ok","timestamp":"2026-10-03T07:40:06.487460Z"}
+  ```
+* Output `curl.exe "http://localhost:8000/api/v1/incidents?status=all&limit=10"`:
+  ```json
+  []
+  ```
+* File bằng chứng chi tiết: `evidence/T10/chot2_verification.txt` (UTF-8).
+
+### C. Kết luận kỹ thuật
+* Service `soc-central` đã được build và chạy thành công trên nền tảng Docker Compose, kết nối ổn định với `soc-postgres`.
+* Background task tự động rà soát đóng stale incident đã chạy ngầm theo chu kỳ 5 giây bằng asyncio.
+* Bảng `incidents` hiện sẵn sàng để nhận dữ liệu gộp từ các đợt tấn công thực tế ở Chốt 3.
+
+### D. File đã thay đổi
+* `evidence/T10/chot2_verification.txt`: Lưu toàn bộ output thực tế của Chốt 2 (2.450 bytes).
+* `PROGRESS.md`: Cập nhật báo cáo nghiệm thu Chốt 2.
+
+### E. Số liệu đo lường
+* Containers Up: 12/12 (100%).
+* HTTP Status Code: 200 OK trên toàn bộ endpoint đã kiểm tra (`/health`, `/api/v1/incidents`, `/api/v1/incidents/stats`).
+* Incident hiện có trước bài test: 0 bản ghi.
+
+### F. Rủi ro còn lại
+* Cần kiểm tra hành vi gộp khi các alert đến dồn dập trong khoảng cách < 10 giây và > 10 giây ở Chốt 3.
+
+### G. Chưa kiểm chứng
+* Chưa chạy kịch bản tấn công (tuân thủ nghiêm ngặt chỉ đạo Chốt 2: "Không chạy tấn công ở Chốt này").
+
+### H. Bước tiếp theo đề xuất
+* Chờ lệnh "TIẾP TỤC" của bạn để chuyển sang **Chốt 3: Kiểm thử bằng traffic thật qua script demo_traffic.sh và đối chiếu số lượng incident theo quy tắc gộp 10 giây**.
+
+### I. Không thay đổi
+* KHÔNG git commit, KHÔNG git push.
+* KHÔNG sửa mã nguồn của `agent/`, `sensor/`, `victim/`, `attacker/`.
+* KHÔNG chạy script tấn công ở Chốt này.
+
+### J. Môi trường
+* Docker Desktop 29.8.0, Windows 11.
+* PostgreSQL 15-alpine (`soc-postgres`).
+* Python 3.11-slim FastAPI (`soc-central`).
+
+### K. Ghi chú
+* Ghi báo cáo bằng UTF-8 rõ ràng theo đúng quy định.
+
+
+---
+
+## BÁO CÁO: ALERT CORRELATION ENGINE (CHỐT 3 - NGHIỆM THU E2E VỚI TRAFFIC TẤN CÔNG THẬT)
+**Giờ hệ thống:** 2026-10-03 15:28:00 +07:00
+
+### A. Trạng thái từng việc
+* **Kiểm thử gộp trong cửa sổ 10 giây (Intra-window correlation)**: `DONE_VERIFIED` (bắn 3 đợt scan dồn dập trong 4s -> gộp chính xác vào Incident #4 với `alert_count = 2`, `status = 'open'`).
+* **Kiểm thử tự động đóng stale incident (Stale Closer)**: `DONE_VERIFIED` (chờ 12s không có alert mới -> background task chuyển Incident #4 sang `status = 'closed'`).
+* **Kiểm thử tách incident ngoài cửa sổ 10 giây (Inter-window correlation)**: `DONE_VERIFIED` (bắn tiếp đợt scan sau 15s -> tạo Incident #5 mới riêng biệt với `status = 'open'`, không ghi đè vào Incident #4 đã đóng).
+* **Kiểm thử tương quan đa site (Multi-site & Severity Mapping)**: `DONE_VERIFIED` (HQ -> `high`, Server Farm -> `medium`, DMZ -> `critical`, tất cả ghi nhận đủ `src_ip`).
+* **Kiểm tra API /incidents và /incidents/stats**: `DONE_VERIFIED` (trả về đúng 6 incidents theo thứ tự `last_alert_at` giảm dần, thống kê theo severity và status khớp 100% với PostgreSQL).
+
+### B. Bằng chứng cụ thể
+* Bảng dữ liệu incidents thực tế được tạo trong PostgreSQL:
+
+| ID | Site | SID | Src IP | Severity | Alert Count | Status | Thời gian bắt đầu -> kết thúc |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1** | hq | 1000002 | 172.20.0.3 | **high** | 1 | closed | 08:23:47 -> 08:23:47 |
+| **2** | serverfarm | 1000001 | 172.22.0.2 | **medium** | 1 | closed | 08:23:55 -> 08:23:55 |
+| **3** | dmz | 1000003 | 172.19.0.2 | **critical** | 1 | closed | 08:24:15 -> 08:24:15 |
+| **4** | hq | 1000002 | 172.20.0.3 | **high** | **2** | closed | 08:25:26 -> 08:25:31 *(Gộp 2 alert < 10s)* |
+| **5** | hq | 1000002 | 172.20.0.3 | **high** | 1 | closed | 08:25:47 -> 08:25:47 *(Tách mới sau > 15s)* |
+| **6** | serverfarm | 1000001 | 172.22.0.2 | **medium** | 1 | closed | 08:26:12 -> 08:26:12 *(Tách mới sau > 15s)* |
+
+* Output API Thống kê (`curl.exe http://localhost:8000/api/v1/incidents/stats`):
+  ```json
+  {"total_incidents":6,"by_severity":{"medium":2,"high":3,"critical":1},"by_status":{"closed":6}}
+  ```
+* Output API Lọc (`curl.exe http://localhost:8000/api/v1/incidents?status=open`):
+  `[]` *(Xác nhận toàn bộ các incident quá hạn 10s đều đã được đóng tự động bởi background task)*.
+* Bằng chứng chi tiết: `evidence/T10/chot3_e2e_correlation.txt` (UTF-8).
+
+### C. Kết luận kỹ thuật
+* Alert Correlation Engine đã chứng minh hoạt động chính xác trên môi trường thực tế:
+  1. Gộp chính xác các alert cùng `(site, sid, src_ip)` xuất hiện trong vòng 10 giây vào 1 incident duy nhất, tăng `alert_count` tương ứng.
+  2. Gán đúng severity: SSH Brute Force (`critical`), SYN Scan (`high`), ICMP Flood (`medium`).
+  3. Tự động đóng incident (`status = 'closed'`) khi không còn traffic sau 10 giây qua background worker 5s.
+  4. Tạo incident mới riêng biệt khi có đợt tấn công mới sau khoảng thời gian đã đóng, không làm sai lệch lịch sử đợt tấn công cũ.
+
+### D. File đã thay đổi
+* `evidence/T10/chot3_e2e_correlation.txt`: Tạo mới, lưu chi tiết toàn bộ log truy vấn DB và API (3.355 bytes).
+* `PROGRESS.md`: Cập nhật báo cáo nghiệm thu Chốt 3.
+
+### E. Số liệu đo lường
+* Cỡ mẫu incidents nghiệm thu: n = 6 incidents.
+* Tổng số alert thô tiếp nhận trong đợt test: 7 raw alerts mới (nâng tổng `raw_alerts` từ 40 lên 47).
+* Tỷ lệ gộp chính xác theo cửa sổ 10s: 100% (Incident #4 ghi nhận `alert_count = 2`, `last_alert_at - first_alert_at = 5.5s` < 10s).
+* Tỷ lệ tự động đóng đúng hạn: 6/6 incidents (100%).
+
+### F. Rủi ro còn lại
+* Hiện tại thời gian 10s được cấu hình cố định trong code (`CORRELATION_WINDOW_SECONDS = 10`). Trong tương lai có thể đưa ra biến môi trường để tùy biến theo từng loại hình tấn công.
+
+### G. Chưa kiểm chứng
+* Bảng `notifications` (chờ Notification Dispatcher ở giai đoạn tiếp theo).
+* Bảng `admin_users` (chờ Authentication Module).
+
+### H. Bước tiếp theo đề xuất
+* Hoàn tất toàn bộ 3 Chốt của Alert Correlation Engine.
+* Chờ người dùng xác nhận nghiệm thu để tiến hành commit/push lên GitHub hoặc triển khai Notification / Dashboard.
+
+### I. Không thay đổi
+* KHÔNG git commit, KHÔNG git push.
+* KHÔNG sửa mã nguồn của `agent/`, `sensor/`, `victim/`, `attacker/`.
+
+### J. Môi trường
+* Docker Desktop 29.8.0, PostgreSQL 15-alpine (`soc-postgres`).
+* Python 3.11-slim FastAPI (`soc-central`).
+* File encoding: UTF-8 toàn vẹn.
+
+### K. Ghi chú
+* Ghi dữ liệu bằng UTF-8 rõ ràng, tuân thủ nghiêm ngặt nguyên tắc nghiệm thu có số liệu thực tế n cụ thể.

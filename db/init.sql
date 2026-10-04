@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS incidents (
     id BIGSERIAL PRIMARY KEY,
     site TEXT NOT NULL,
     sid INT NOT NULL,
+    src_ip TEXT,
     severity TEXT NOT NULL,
     alert_count INT NOT NULL DEFAULT 1,
     first_alert_at TIMESTAMPTZ NOT NULL,
@@ -47,6 +48,10 @@ CREATE TABLE IF NOT EXISTS incidents (
     status TEXT NOT NULL DEFAULT 'open',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Index for fast correlation lookup: find open incidents matching (site, sid, src_ip)
+CREATE INDEX IF NOT EXISTS idx_incidents_correlation
+    ON incidents (site, sid, src_ip, status) WHERE status = 'open';
 
 -- 4. Notifications Table (Dispatch records for Telegram / Webhook)
 CREATE TABLE IF NOT EXISTS notifications (

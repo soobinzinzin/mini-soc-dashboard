@@ -1,0 +1,38 @@
+=== CHỐT 2 VERIFICATION OUTPUT ===
+Time: 2026-10-03 14:40:00 +07:00
+
+--- BƯỚC 1: DOCKER COMPOSE PS (12/12 CONTAINERS UP) ---
+NAME                IMAGE                                                                     COMMAND                  SERVICE             CREATED        STATUS                        PORTS
+agent-dmz           sha256:d898fe42d3c95453da30f39b02a8fe3001ff1a70030c050b9e549100397b923e   "python agent.py"        agent-dmz           26 hours ago   Up About a minute             
+agent-hq            sha256:cfdb806c115e3a227436aaade4315f5582f7868acca898855d12d180a5f3c2f4   "python agent.py"        agent-hq            26 hours ago   Up About a minute             
+agent-serverfarm    sha256:26ba3a4b7e9f2476865fef0ade858facd696c20a86e15edcde83bd8d7b0807e0   "python agent.py"        agent-serverfarm    26 hours ago   Up About a minute             
+attacker            sha256:2138cfb18f24bddb409f46953445b923dfad826ba2a17282b039bb1b9b4d2246   "sleep infinity"         attacker            26 hours ago   Up About a minute             
+sensor-dmz          sha256:e6fe4c6aa81a3d6ea8eb0e28e82d61607971b5f362e49b660723f88100d22ff1   "snort -q -k none -c…"   sensor-dmz          26 hours ago   Up About a minute             
+sensor-hq           sha256:a668b957f2dcec34a5d18703bb36e55f22e8947dd10b9d4badf2c738e183b18d   "snort -q -k none -c…"   sensor-hq           26 hours ago   Up About a minute             
+sensor-serverfarm   sha256:6fee6f5e206613eccd359fa292a37ac152d7d8bdaaeacc38b42b5fe215f9f5b7   "snort -q -k none -c…"   sensor-serverfarm   26 hours ago   Up About a minute             
+soc-central         sha256:af95c189a3103ad25630900ad09d58b98458bcb2a5aec225df529359341decf6   "uvicorn main:app --…"   soc-central         14 hours ago   Up About a minute             127.0.0.1:8000->8000/tcp
+soc-postgres        postgres:15-alpine                                                        "docker-entrypoint.s…"   postgres            26 hours ago   Up About a minute (healthy)   5432/tcp
+victim-dmz          sha256:6242550e51f784fba42e17505a26f3142d63d3d5e4a92578c99757480cff80f1   "/bin/sh -c 'service…"   victim-dmz          26 hours ago   Up About a minute             22/tcp, 80/tcp
+victim-hq           sha256:6d71166ea77f6f4e64b8cd6dd3dcf7ee3e9c8f50a91999312bb8a88be9fb1bc6   "/bin/sh -c 'service…"   victim-hq           26 hours ago   Up About a minute             22/tcp, 80/tcp
+victim-serverfarm   sha256:e9b0c6b34e519acdf56f47a930d9f20605e6dd4ceba2235a66d146464bba36c1   "/bin/sh -c 'service…"   victim-serverfarm   26 hours ago   Up About a minute             22/tcp, 80/tcp
+
+
+--- BƯỚC 1: DOCKER LOGS SOC-CENTRAL (CONFIRM STALE INCIDENT CHECKER) ---
+INFO:     172.21.0.1:33978 - "GET /health HTTP/1.1" 200 OK
+INFO:     172.21.0.1:33984 - "GET /api/v1/incidents HTTP/1.1" 200 OK
+INFO:     172.21.0.1:33994 - "GET /api/v1/incidents/stats HTTP/1.1" 200 OK
+INFO:     172.21.0.1:42604 - "GET /health HTTP/1.1" 200 OK
+INFO:     172.21.0.1:42612 - "GET /api/v1/incidents HTTP/1.1" 200 OK
+INFO:     172.21.0.1:42620 - "GET /api/v1/incidents/stats HTTP/1.1" 200 OK
+INFO:     172.21.0.1:58934 - "GET /health HTTP/1.1" 200 OK
+INFO:     172.21.0.1:39276 - "GET /api/v1/incidents?status=all&limit=10 HTTP/1.1" 200 OK
+
+
+--- BƯỚC 2: CURL /HEALTH (CONFIRM DATABASE: OK) ---
+{"status":"healthy","service":"ingestion-api","database":"ok","timestamp":"2026-10-03T07:40:25.210288Z"}
+
+--- BƯỚC 3: CURL /API/V1/INCIDENTS?STATUS=ALL&LIMIT=10 ---
+[]
+
+--- BONUS: CURL /API/V1/INCIDENTS/STATS ---
+{"total_incidents":0,"by_severity":{},"by_status":{}}

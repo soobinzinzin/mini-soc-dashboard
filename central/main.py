@@ -7,6 +7,7 @@ into PostgreSQL persistent database.
 
 import os
 import uuid
+import asyncio
 import logging
 from datetime import datetime
 from typing import List, Optional, Union
@@ -23,6 +24,12 @@ from db import (
     get_raw_alerts,
     get_stats,
     truncate_raw_alerts
+)
+from correlation import (
+    process_new_alert,
+    close_stale_incidents,
+    get_incidents,
+    get_incident_stats
 )
 
 # Configure logging
@@ -49,13 +56,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Background task for closing stale incidents
+_stale_checker_task = None
+
+
+async def _stale_incident_checker():
+    """Background coroutine: close stale incidents every 5 seconds."""
+    while True:
+        try:
+            await asyncio.sleep(5)
+            closed = close_stale_incidents()
+            if closed > 0:
+                logger.info(f"Background checker: closed {closed} stale incident(s).")
+        except asyncio.CancelledError:
+            logger.info("Stale incident checker stopped.")
+            break
+        except Exception as e:
+            logger.error(f"Stale incident checker error: {e}")
+
 
 @app.on_event("startup")
-def startup_event():
+async def startup_event():
     """
     Initialize database connection on application startup.
-    Logs error clearly without crashing if DB is temporarily unreachable.
+    Start background task for closing stale incidents.
     """
+    global _stale_checker_task
     db_url = os.getenv("DATABASE_URL")
     logger.info("Initializing Central Ingestion API service...")
     if not db_url:
@@ -64,15 +90,26 @@ def startup_event():
         connected = init_db(db_url)
         if connected:
             logger.info("PostgreSQL database connection established successfully.")
+            # Start background task for closing stale incidents
+            _stale_checker_task = asyncio.create_task(_stale_incident_checker())
+            logger.info("Stale incident checker background task started (interval: 5s).")
         else:
             logger.error("Could not connect to database on startup. Endpoints will report 500 until DB is ready.")
 
 
 @app.on_event("shutdown")
-def shutdown_event():
-    """Close database pool on shutdown."""
-    logger.info("Shutting down Ingestion API service, closing database connections...")
+async def shutdown_event():
+    """Close database pool and stop background tasks on shutdown."""
+    global _stale_checker_task
+    logger.info("Shutting down Ingestion API service...")
+    if _stale_checker_task and not _stale_checker_task.done():
+        _stale_checker_task.cancel()
+        try:
+            await _stale_checker_task
+        except asyncio.CancelledError:
+            pass
     close_db()
+    logger.info("Database connections closed.")
 
 
 @app.get("/", tags=["Info"])
@@ -160,6 +197,8 @@ def ingest_telemetry(payload: Union[TelemetryPayload, List[TelemetryPayload]]):
                     f"'{record['signature']}' | {record['protocol']} {record['src_ip']}:"
                     f"{record.get('src_port') or '*'} -> {record['dst_ip']}:{record.get('dst_port') or '*'}"
                 )
+                # 3. Correlate alert into incident
+                process_new_alert(alert_data)
             else:
                 logger.warning(f"Duplicate alert skipped: telemetry_id={telemetry_id}")
 
@@ -241,6 +280,49 @@ def clear_telemetry():
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to truncate raw_alerts: {str(e)}"
+        )
+
+
+# =============================================================================
+# INCIDENTS ENDPOINTS (Alert Correlation Engine)
+# =============================================================================
+
+@app.get("/api/v1/incidents", response_model=List[dict], tags=["Incidents"])
+def list_incidents(
+    status_filter: Optional[str] = Query(
+        "all",
+        alias="status",
+        description="Filter by status: open, closed, or all (default)"
+    ),
+    limit: int = Query(50, ge=1, le=500, description="Max number of items to return")
+):
+    """
+    Retrieve incidents sorted by last_alert_at descending.
+    Supports filtering by status (open/closed/all).
+    """
+    effective_status = status_filter if status_filter in ("open", "closed", "all") else "all"
+    try:
+        return get_incidents(status_filter=effective_status, limit=limit)
+    except Exception as e:
+        logger.error(f"Failed to query incidents: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database query error: {str(e)}"
+        )
+
+
+@app.get("/api/v1/incidents/stats", tags=["Incidents"])
+def get_incidents_stats():
+    """
+    Return aggregate incident statistics by severity and status.
+    """
+    try:
+        return get_incident_stats()
+    except Exception as e:
+        logger.error(f"Failed to compute incident stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database stats query error: {str(e)}"
         )
 
 

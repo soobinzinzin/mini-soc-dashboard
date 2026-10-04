@@ -1,0 +1,24 @@
+=== CHỐT 2 EVIDENCE ===
+--- DOCKER COMPOSE PS -A ---
+NAME                IMAGE                               COMMAND                  SERVICE             CREATED          STATUS                 PORTS
+agent-dmz           mini-soc-lab-v2-agent-dmz           "python agent.py"        agent-dmz           12 hours ago     Up 5 hours             
+agent-hq            mini-soc-lab-v2-agent-hq            "python agent.py"        agent-hq            12 hours ago     Up 5 hours             
+agent-serverfarm    mini-soc-lab-v2-agent-serverfarm    "python agent.py"        agent-serverfarm    12 hours ago     Up 5 hours             
+attacker            mini-soc-lab-v2-attacker            "sleep infinity"         attacker            12 hours ago     Up 5 seconds           
+sensor-dmz          mini-soc-lab-v2-sensor-dmz          "snort -q -k none -c…"   sensor-dmz          12 hours ago     Up 5 seconds           
+sensor-hq           mini-soc-lab-v2-sensor-hq           "snort -q -k none -c…"   sensor-hq           12 hours ago     Up 5 seconds           
+sensor-serverfarm   mini-soc-lab-v2-sensor-serverfarm   "snort -q -k none -c…"   sensor-serverfarm   12 hours ago     Up 4 seconds           
+soc-central         mini-soc-lab-v2-soc-central         "uvicorn main:app --…"   soc-central         36 seconds ago   Up 34 seconds          127.0.0.1:8000->8000/tcp
+soc-postgres        postgres:15-alpine                  "docker-entrypoint.s…"   postgres            12 hours ago     Up 5 hours (healthy)   5432/tcp
+victim-dmz          mini-soc-lab-v2-victim-dmz          "/bin/sh -c 'service…"   victim-dmz          12 hours ago     Up 5 seconds           22/tcp, 80/tcp
+victim-hq           mini-soc-lab-v2-victim-hq           "/bin/sh -c 'service…"   victim-hq           12 hours ago     Up 5 seconds           22/tcp, 80/tcp
+victim-serverfarm   mini-soc-lab-v2-victim-serverfarm   "/bin/sh -c 'service…"   victim-serverfarm   12 hours ago     Up 5 seconds           22/tcp, 80/tcp
+
+--- HEALTH CHECK ---
+{"status":"healthy","service":"ingestion-api","database":"ok","timestamp":"2026-10-02T17:17:34.729722Z"}
+
+--- GET /api/v1/incidents ---
+[]
+
+--- GET /api/v1/incidents/stats ---
+{"total_incidents":0,"by_severity":{},"by_status":{}}
