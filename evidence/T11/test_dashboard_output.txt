@@ -1,0 +1,31 @@
+▶ 1. SID to Attack Name Mapping
+  ✔ maps SID 1000001 to ICMP Flood (2.7183ms)
+  ✔ maps SID 1000002 to SYN Port Scan (0.5535ms)
+  ✔ maps SID 1000003 to SSH Brute Force (3.4749ms)
+  ✔ handles string SID representations (0.2308ms)
+  ✔ falls back to readable label for undefined SID (0.4426ms)
+✔ 1. SID to Attack Name Mapping (12.5082ms)
+▶ 2. Severity to Color Mapping
+  ✔ maps critical severity to red colors (0.129ms)
+  ✔ maps high severity to orange colors (0.1707ms)
+  ✔ maps medium severity to yellow colors (0.2038ms)
+  ✔ maps low severity to gray colors (0.3813ms)
+  ✔ defaults to low/gray for unknown severity (1.2858ms)
+✔ 2. Severity to Color Mapping (3.296ms)
+▶ 3. Timestamp Formatting
+  ✔ handles empty or null timestamp gracefully (0.4386ms)
+  ✔ formats valid ISO timestamp into string (23.8261ms)
+✔ 3. Timestamp Formatting (25.686ms)
+▶ 4. API Error Handling Logic
+  ✔ verifies error capture when fetch fails (0.7698ms)
+  ✔ verifies error capture on HTTP 500 response (0.4987ms)
+✔ 4. API Error Handling Logic (3.6158ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 61.974
+

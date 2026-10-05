@@ -47,11 +47,22 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Enable CORS for dashboard integration (React)
+# Configure CORS for dashboard integration (React)
+dashboard_origin_env = os.getenv("DASHBOARD_ORIGIN", "*")
+if dashboard_origin_env == "*":
+    cors_origins = ["*"]
+    logger.warning(
+        "CORS allow_origins is set to wildcard '*' for development/lab. "
+        "WARNING: Wildcard origin cannot be used with credentials/cookies when real authentication is implemented."
+    )
+else:
+    cors_origins = [orig.strip() for orig in dashboard_origin_env.split(",") if orig.strip()]
+    logger.info(f"CORS configured with explicit origins: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=False if cors_origins == ["*"] else True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
