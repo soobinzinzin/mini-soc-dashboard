@@ -5,7 +5,9 @@ Groups raw_alerts into incidents using a 10-second sliding window
 keyed on (site, sid, src_ip). Assigns severity based on SID mapping.
 """
 
+import asyncio
 import logging
+import threading
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional, List
 
@@ -38,6 +40,56 @@ def get_severity(sid: int) -> str:
         )
         return "low"
     return severity
+
+
+async def _send_incident_notification(incident_data: Dict[str, Any]) -> bool:
+    """Async task to format, send Telegram notification, and record to DB."""
+    try:
+        from notifier import send_telegram_message, format_incident_message
+        from notifications_db import insert_notification
+
+        message_text = format_incident_message(incident_data)
+        success = await send_telegram_message(message_text)
+        status = "sent" if success else "failed"
+
+        insert_notification(
+            incident_id=incident_data.get("id"),
+            channel="telegram",
+            status=status
+        )
+        return success
+    except Exception as e:
+        logger.error(f"Error dispatching notification for incident #{incident_data.get('id')}: {e}")
+        try:
+            from notifications_db import insert_notification
+            insert_notification(
+                incident_id=incident_data.get("id"),
+                channel="telegram",
+                status="failed"
+            )
+        except Exception:
+            pass
+        return False
+
+
+def _trigger_telegram_notification(incident_data: Dict[str, Any]) -> None:
+    """
+    Schedule notification dispatch task in the background.
+    Uses asyncio.create_task if an event loop is running (e.g. async FastAPI route);
+    otherwise spawns a daemon thread (e.g. sync def route run in FastAPI's threadpool).
+    In either case, this function returns immediately without blocking the caller.
+    """
+    try:
+        loop = asyncio.get_running_loop()
+        loop.create_task(_send_incident_notification(incident_data))
+    except RuntimeError:
+        # No running event loop (e.g. FastAPI sync route in threadpool worker).
+        # Spawn a daemon thread so the caller is NOT blocked.
+        threading.Thread(
+            target=asyncio.run,
+            args=(_send_incident_notification(incident_data),),
+            daemon=True,
+        ).start()
 
 
 def process_new_alert(raw_alert: Dict[str, Any]) -> Optional[int]:
@@ -152,6 +204,22 @@ def process_new_alert(raw_alert: Dict[str, Any]) -> Optional[int]:
                     f"NEW incident #{incident_id} created "
                     f"[{site}/{sid}/{src_ip}] severity={severity}"
                 )
+
+                # Send Telegram notification ONLY for new incidents with severity critical or high
+                if incident_id and severity in ("critical", "high"):
+                    incident_data = {
+                        "id": incident_id,
+                        "site": site,
+                        "sid": sid,
+                        "src_ip": src_ip,
+                        "severity": severity,
+                        "alert_count": 1,
+                        "first_alert_at": alert_dt,
+                        "last_alert_at": alert_dt,
+                        "status": "open"
+                    }
+                    _trigger_telegram_notification(incident_data)
+
                 return incident_id
 
     except Exception as e:
