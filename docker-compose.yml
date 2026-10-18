@@ -114,6 +114,8 @@ services:
       - net-central
     environment:
       - DATABASE_URL=postgresql://minisoc:${POSTGRES_PASSWORD}@soc-postgres:5432/minisoc
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
     depends_on:
       postgres:
         condition: service_healthy

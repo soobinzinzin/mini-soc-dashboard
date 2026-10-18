@@ -23,3 +23,18 @@ desktop.ini
 # Node / Frontend
 node_modules/
 dist/
+
+# Temporary scratch test scripts at root
+test_diag.py
+test_full.py
+test_h.py
+test_layout.py
+test_rank.py
+test_variations.py
+
+# Sensitive course docs and archives
+docs/week4/
+docs/week5/
+docs.zip
+docs/week4.zip
+docs/week5.zip
