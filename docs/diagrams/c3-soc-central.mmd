@@ -1,0 +1,80 @@
+flowchart TB
+    %% =========================================================================
+    %% C3: SƠ ĐỒ THÀNH PHẦN (COMPONENT DIAGRAM) - CONTAINER SOC-CENTRAL
+    %% =========================================================================
+
+    subgraph External_Callers ["Thực thể Giao tiếp Ngoài"]
+        Agents["<b>agent-hq / agent-serverfarm / agent-dmz</b><br/>[Python agent]<br/>Các shipper agent gửi dữ liệu telemetry"]:::callerStyle
+        Dashboard["<b>soc-dashboard</b><br/>[React + Vite / nginx]<br/>Trình duyệt / UI quản trị viên"]:::callerStyle
+    end
+
+    subgraph Central_Container ["Ranh giới Container soc-central [Python 3.11 / FastAPI]"]
+
+        subgraph Ingestion_Flow ["Luồng Thu nhận Dữ liệu (Ingestion Pipeline)"]
+            IngestAPI["<b>Ingestion Endpoint</b><br/>[POST /api/v1/telemetry trong main.py]<br/>Tiếp nhận batch hoặc single telemetry event"]:::componentStyle
+            Validator["<b>Schema Validator</b><br/>[schemas.py / Pydantic]<br/>Xác thực cấu trúc TelemetryPayload"]:::componentStyle
+        end
+
+        subgraph Correlation_Flow ["Khối Tương quan & Xử lý Sự cố"]
+            Correlation["<b>Correlation Engine</b><br/>[correlation.py]<br/>Gộp theo (site, sid, src_ip),<br/>cửa sổ trượt 10 giây, gán severity"]:::componentStyle
+            StaleChecker["<b>Stale Checker</b><br/>[Background task trong main.py]<br/>Chạy chu kỳ 5s, tự động đóng incident<br/>sau 10s không có alert mới"]:::componentStyle
+        end
+
+        subgraph Notification_Flow ["Khối Thông báo Cảnh báo (Notification Pipeline)"]
+            Notifier["<b>Notifier</b><br/>[notifier.py]<br/>Format tin nhắn HTML GMT+7,<br/>gửi HTTPS retry 3 lần, không retry 4xx"]:::componentStyle
+            NotifDB["<b>Notification Log</b><br/>[notifications_db.py]<br/>Quản lý lưu vết trạng thái gửi tin (sent/failed)"]:::componentStyle
+        end
+
+        subgraph Query_Flow ["Luồng Truy vấn Dữ liệu (Query Pipeline)"]
+            QueryAPI["<b>Query API</b><br/>[GET /api/v1/incidents, /stats, /telemetry]<br/>Cung cấp dữ liệu sự cố và thống kê"]:::componentStyle
+        end
+
+        subgraph Storage_Flow ["Khối Truy cập Dữ liệu (Data Access Layer)"]
+            DBAccess["<b>DB Access</b><br/>[db.py]<br/>ThreadedConnectionPool (1-10 connections),<br/>context manager get_connection"]:::componentStyle
+        end
+
+    end
+
+    subgraph External_Storage ["Hệ thống Lưu trữ & Dịch vụ Ngoài"]
+        Postgres[("<b>soc-postgres</b><br/>[PostgreSQL 15]<br/>Lưu trữ sensors, raw_alerts,<br/>incidents, notifications")]:::dbStyle
+        Telegram["<b>Telegram Bot API</b><br/>[External Service]<br/>Dịch vụ gửi tin nhắn tức thời đám mây"]:::externalStyle
+    end
+
+    %% Các luồng dữ liệu bên trong soc-central
+    Agents -->|"1. Gửi alert JSON [HTTP POST /api/v1/telemetry]"| IngestAPI
+    IngestAPI -->|"2. Xác thực cấu trúc payload [Python Call]"| Validator
+    IngestAPI -->|"3. Ghi nhận sensor và lưu raw_alert [Python Call]"| DBAccess
+    IngestAPI -->|"4. Chuyển raw_alert sang engine tương quan [Python Call]"| Correlation
+
+    Correlation -->|"5. Tìm kiếm hoặc cập nhật incident trong cửa sổ 10s [Python Call]"| DBAccess
+    StaleChecker -->|"6. Định kỳ 5s quét đóng incident quá 10s [Python Call]"| Correlation
+
+    Correlation -->|"7. Gửi cảnh báo critical/high [Daemon Thread / Async Dispatch]"| Notifier
+    Notifier -->|"8. Gửi cảnh báo [HTTPS POST, retry 3 lần, không retry 4xx] (đang tích hợp)"| Telegram
+    Correlation -->|"9. Ghi kết quả gửi sent/failed [Python Call]"| NotifDB
+    NotifDB -->|"10. Lưu lịch sử dispatch vào notifications [Python Call]"| DBAccess
+
+    Dashboard -->|"11. Lấy incidents và stats [HTTP GET polling 5s]"| QueryAPI
+    QueryAPI -->|"12. Truy vấn danh sách incident và thống kê [Python Call]"| DBAccess
+
+    DBAccess <-->|"13. Thực thi truy vấn [PostgreSQL Wire Protocol / TCP 5432]"| Postgres
+
+    %% Bảng chú giải (Legend)
+    subgraph Legend ["Chú giải (Legend)"]
+        direction LR
+        L_Caller["Thực thể gọi ngoài [Caller]"]:::callerStyle
+        L_Comp["Component nội bộ [Python Component]"]:::componentStyle
+        L_Ext["Dịch vụ bên ngoài [External Service]"]:::externalStyle
+        L_DB[("Cơ sở dữ liệu [Database]")]:::dbStyle
+    end
+
+    %% Định nghĩa phong cách (C4 Styling)
+    classDef callerStyle fill:#388e3c,stroke:#1b5e20,stroke-width:2px,color:#ffffff;
+    classDef componentStyle fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#ffffff;
+    classDef dbStyle fill:#0288d1,stroke:#01579b,stroke-width:2px,color:#ffffff;
+    classDef externalStyle fill:#888888,stroke:#555555,stroke-width:2px,color:#ffffff;
+    classDef boundaryStyle fill:#f9fbfd,stroke:#1168bd,stroke-width:2px,stroke-dasharray: 5 5,color:#1168bd;
+    classDef subflowStyle fill:#ffffff,stroke:#cccccc,stroke-width:1px,stroke-dasharray: 3 3,color:#333333;
+
+    class Central_Container boundaryStyle;
+    class Ingestion_Flow,Correlation_Flow,Notification_Flow,Query_Flow,Storage_Flow,External_Callers,External_Storage,Legend subflowStyle;

@@ -1,0 +1,46 @@
+flowchart TB
+    %% =========================================================================
+    %% C1: SƠ ĐỒ BỐI CẢNH HỆ THỐNG (SYSTEM CONTEXT DIAGRAM) - MINI-SOC SYSTEM
+    %% =========================================================================
+
+    subgraph Boundary_Users ["Người dùng & Vai trò"]
+        Admin(["<b>Quản trị viên / SOC Analyst</b><br/>[Person]<br/>Giám sát sự cố an ninh mạng qua bảng điều khiển,<br/>tiếp nhận thông báo cảnh báo tức thời"]):::personStyle
+        Attacker(["<b>Kẻ tấn công mô phỏng</b><br/>[Person (Môi trường Lab)]<br/>Phát động lưu lượng tấn công mạng"]):::personStyle
+    end
+
+    subgraph Monitored_Branches ["Máy chủ chi nhánh được giám sát (lab)"]
+        Victims["<b>Máy chủ chi nhánh (victim-hq, victim-serverfarm, victim-dmz)</b><br/>[Ubuntu victim, SSH/HTTP]<br/>Hạ tầng chi nhánh mục tiêu trong môi trường lab"]:::externalStyle
+    end
+
+    subgraph Boundary_System ["Ranh giới Hệ thống Mini-SOC"]
+        MiniSOC["<b>Hệ thống Giám sát An ninh mạng Mini-SOC</b><br/>[Software System]<br/>Thu thập telemetry, phát hiện xâm nhập (Snort IDS),<br/>tương quan sự cố và trực quan hóa cảnh báo"]:::internalSystem
+    end
+
+    subgraph Boundary_External ["Hệ thống bên ngoài"]
+        Telegram["<b>Telegram Bot API</b><br/>[External System]<br/>Nền tảng nhắn tin đám mây gửi cảnh báo khẩn cấp"]:::externalStyle
+    end
+
+    %% Các luồng dữ liệu và tương tác
+    Attacker -->|"Tấn công SYN scan / ICMP flood / SSH brute force [TCP/ICMP]"| Victims
+    MiniSOC -.->|"Giám sát lưu lượng mạng [Bắt gói tin promiscuous]"| Victims
+    Admin -->|"Truy cập bảng điều khiển, lọc sự cố [HTTP GET polling 5s]"| MiniSOC
+    MiniSOC -->|"Gửi cảnh báo critical/high [HTTPS] (đang tích hợp)"| Telegram
+    Telegram -->|"Đẩy thông báo sự cố [ứng dụng Telegram]"| Admin
+
+    %% Bảng chú giải (Legend)
+    subgraph Legend ["Chú giải (Legend)"]
+        direction LR
+        L_Person(["Người dùng / Vai trò [Person]"]):::personStyle
+        L_Internal["Hệ thống nội bộ [System]"]:::internalSystem
+        L_External["Hệ thống ngoài / Máy chủ giám sát [External]"]:::externalStyle
+    end
+
+    %% Định nghĩa phong cách trực quan (C4 Styling)
+    classDef personStyle fill:#08427b,stroke:#052a4f,stroke-width:2px,color:#ffffff;
+    classDef internalSystem fill:#1168bd,stroke:#0b4884,stroke-width:3px,color:#ffffff;
+    classDef externalStyle fill:#888888,stroke:#555555,stroke-width:2px,color:#ffffff;
+    classDef boundaryStyle fill:#f9fbfd,stroke:#1168bd,stroke-width:2px,stroke-dasharray: 5 5,color:#1168bd;
+    classDef groupStyle fill:#ffffff,stroke:#cccccc,stroke-width:1px,stroke-dasharray: 3 3,color:#333333;
+
+    class Boundary_System boundaryStyle;
+    class Boundary_Users,Monitored_Branches,Boundary_External,Legend groupStyle;

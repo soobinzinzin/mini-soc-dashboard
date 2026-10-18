@@ -1,0 +1,64 @@
+erDiagram
+    %% =========================================================================
+    %% SƠ ĐỒ THỰC THỂ QUAN HỆ (ERD) - CƠ SỞ DỮ LIỆU POSTGRESQL MINISOC
+    %% Ghi chú quan hệ logic: incidents liên kết với raw_alerts qua (site, sid, src_ip), không có khoá ngoại vật lý
+    %% Bảng admin_users đứng riêng: chưa dùng, chuẩn bị cho xác thực
+    %% =========================================================================
+
+    sensors ||--o{ raw_alerts : "gửi (sensor_id)"
+    incidents |o--o{ notifications : "phát sinh (incident_id)"
+    raw_alerts }o..o{ incidents : "tương quan logic (site, sid, src_ip)"
+
+    sensors {
+        text sensor_id PK "Mã cảm biến định danh"
+        text site "Khu vực mạng (hq, serverfarm, dmz)"
+        timestamptz first_seen "Thời điểm cảm biến ghi nhận lần đầu"
+        timestamptz last_seen "Thời điểm cảm biến hoạt động gần nhất"
+    }
+
+    raw_alerts {
+        uuid telemetry_id PK "Mã duy nhất của bản ghi telemetry"
+        text sensor_id FK "Tham chiếu sensors(sensor_id)"
+        text site "Khu vực mạng ghi nhận cảnh báo"
+        int gid "Generator ID của Snort"
+        int sid "Signature ID của Snort"
+        int rev "Revision của luật Snort"
+        text signature "Nội dung mô tả luật cảnh báo"
+        int priority "Mức ưu tiên theo chuẩn Snort (0-4)"
+        text protocol "Giao thức mạng (TCP, UDP, ICMP)"
+        inet src_ip "Địa chỉ IP nguồn"
+        int src_port "Cổng mạng nguồn"
+        inet dst_ip "Địa chỉ IP đích"
+        int dst_port "Cổng mạng đích"
+        text raw_log "Chuỗi log gốc Snort Fast Alert"
+        timestamptz alert_timestamp "Thời điểm cảnh báo xảy ra tại sensor"
+        timestamptz received_at "Thời điểm hệ thống trung tâm tiếp nhận"
+    }
+
+    incidents {
+        bigserial id PK "Khóa chính sự cố tự tăng"
+        text site "Khu vực phát sinh chuỗi tấn công"
+        int sid "Mã nhận diện chữ ký Snort đại diện"
+        text src_ip "Địa chỉ IP nguồn phát động tấn công"
+        text severity "Mức nghiêm trọng (critical, high, medium, low)"
+        int alert_count "Số lần lặp của cảnh báo trong cửa sổ 10s"
+        timestamptz first_alert_at "Thời điểm ghi nhận cảnh báo đầu tiên"
+        timestamptz last_alert_at "Thời điểm ghi nhận cảnh báo gần nhất"
+        text status "Trạng thái xử lý (open hoặc closed)"
+        timestamptz created_at "Thời điểm tạo bản ghi sự cố"
+    }
+
+    notifications {
+        bigserial id PK "Khóa chính thông báo tự tăng"
+        bigint incident_id FK "Tham chiếu incidents(id)"
+        text channel "Kênh thông báo (telegram)"
+        timestamptz sent_at "Thời điểm gửi thành công (null nếu failed)"
+        text status "Trạng thái điều phối (sent / failed / pending)"
+    }
+
+    admin_users {
+        bigserial id PK "Khóa chính tài khoản (chưa dùng, chuẩn bị cho xác thực)"
+        text username "Tên đăng nhập quản trị viên (UNIQUE)"
+        text password_hash "Chuỗi mã hóa mật khẩu"
+        timestamptz created_at "Thời điểm khởi tạo tài khoản"
+    }

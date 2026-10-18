@@ -1,0 +1,100 @@
+%%{init: {"flowchart": {"htmlLabels": true}, "themeVariables": {"fontSize": "30px"}}}%%
+flowchart TB
+    subgraph Lab_Environment ["Môi trường Lab và Chi nhánh được giám sát"]
+        direction TB
+        Attacker["<b>attacker</b><br/>[Kali Linux, nmap/hydra/ping]"]:::externalStyle
+
+        subgraph Monitored_Branches ["Máy chủ chi nhánh được giám sát (lab)"]
+            direction LR
+            Victim_HQ["<b>victim-hq</b><br/>[Ubuntu victim / SSH, HTTP]"]:::externalStyle
+            Victim_SF["<b>victim-serverfarm</b><br/>[Ubuntu victim / SSH, HTTP]"]:::externalStyle
+            Victim_DMZ["<b>victim-dmz</b><br/>[Ubuntu victim / SSH, HTTP]"]:::externalStyle
+        end
+    end
+
+    subgraph MiniSOC_Boundary ["Ranh giới Hệ thống Mini-SOC"]
+        direction TB
+
+        subgraph Sites_Layer ["Tầng thu thập & Chuyển tiếp (Sensor & Agent)"]
+            direction LR
+            subgraph Site_HQ ["Site HQ [net-hq]"]
+                direction TB
+                Sensor_HQ["<b>sensor-hq</b><br/>[Snort 2.9]"]:::sensorStyle
+                Agent_HQ["<b>agent-hq</b><br/>[Python agent]"]:::agentStyle
+                Sensor_HQ -->|"bind mount ./logs/hq :ro"| Agent_HQ
+            end
+
+            subgraph Site_SF ["Site Server Farm [net-serverfarm]"]
+                direction TB
+                Sensor_SF["<b>sensor-serverfarm</b><br/>[Snort 2.9]"]:::sensorStyle
+                Agent_SF["<b>agent-serverfarm</b><br/>[Python agent]"]:::agentStyle
+                Sensor_SF -->|"bind mount ./logs/serverfarm :ro"| Agent_SF
+            end
+
+            subgraph Site_DMZ ["Site DMZ [net-dmz]"]
+                direction TB
+                Sensor_DMZ["<b>sensor-dmz</b><br/>[Snort 2.9]"]:::sensorStyle
+                Agent_DMZ["<b>agent-dmz</b><br/>[Python agent]"]:::agentStyle
+                Sensor_DMZ -->|"bind mount ./logs/dmz :ro"| Agent_DMZ
+            end
+        end
+
+        subgraph Central_Layer ["Tầng Trung tâm Central (net-central)"]
+            direction TB
+            Central["<b>soc-central</b><br/>[Python 3.11 / FastAPI - Ingestion & Correlation]"]:::centralStyle
+            subgraph Central_Sides [" "]
+                direction LR
+                Dashboard["<b>soc-dashboard</b><br/>[React + Vite / nginx]"]:::dashboardStyle
+                DB[("<b>soc-postgres</b><br/>[PostgreSQL 15]")]:::dbStyle
+            end
+            Central <-->|"SQL"| DB
+            Dashboard -->|"HTTP GET 5s"| Central
+        end
+
+        Agent_HQ -->|"HTTP POST alert"| Central
+        Agent_SF -->|"HTTP POST alert"| Central
+        Agent_DMZ -->|"HTTP POST alert"| Central
+    end
+
+    subgraph Management_Layer ["Quản trị & Thông báo"]
+        direction LR
+        Admin(["<b>Quản trị viên / SOC Analyst</b><br/>[Person]"]):::personStyle
+        Telegram["<b>Telegram Bot API</b><br/>[External Service]"]:::externalStyle
+    end
+
+    subgraph Legend ["Chú giải (Legend)"]
+        direction LR
+        L_Person(["Người dùng [Person]"]):::personStyle
+        L_Ext["Thực thể ngoài / Lab [External]"]:::externalStyle
+        L_Central["Khối Central [Core]"]:::centralStyle
+        L_Sensor["Cảm biến & Thu thập [Sensor/Agent]"]:::sensorStyle
+        L_DB[("Cơ sở dữ liệu [Database]")]:::dbStyle
+    end
+
+    %% Tầng 1: Attacker -> 3 Victim
+    Attacker -->|"SYN Port Scan"| Victim_HQ
+    Attacker -->|"ICMP Flood"| Victim_SF
+    Attacker -->|"SSH Brute Force"| Victim_DMZ
+
+    %% Tầng 1 xuống Tầng 2: Mũi tên nét đứt Sensor -> Victim
+    Victim_HQ -.->|"Bắt gói promiscuous"| Sensor_HQ
+    Victim_SF -.->|"Bắt gói promiscuous"| Sensor_SF
+    Victim_DMZ -.->|"Bắt gói promiscuous"| Sensor_DMZ
+
+    %% Tầng 3 xuống Tầng 4
+    Dashboard -->|"HTTP :5173"| Admin
+    Central -->|"HTTPS (đang tích hợp)"| Telegram
+    Telegram -->|"Đẩy cảnh báo"| Admin
+
+    classDef personStyle fill:#08427b,stroke:#052a4f,stroke-width:2px,color:#ffffff;
+    classDef externalStyle fill:#888888,stroke:#555555,stroke-width:2px,color:#ffffff;
+    classDef centralStyle fill:#1168bd,stroke:#0b4884,stroke-width:2px,color:#ffffff;
+    classDef dashboardStyle fill:#1a73e8,stroke:#0d47a1,stroke-width:2px,color:#ffffff;
+    classDef sensorStyle fill:#2e7d32,stroke:#1b5e20,stroke-width:2px,color:#ffffff;
+    classDef agentStyle fill:#388e3c,stroke:#1b5e20,stroke-width:2px,color:#ffffff;
+    classDef dbStyle fill:#0288d1,stroke:#01579b,stroke-width:2px,color:#ffffff;
+    classDef boundaryStyle fill:#f9fbfd,stroke:#1168bd,stroke-width:2px,stroke-dasharray: 5 5,color:#1168bd;
+    classDef groupStyle fill:#ffffff,stroke:#cccccc,stroke-width:1px,stroke-dasharray: 3 3,color:#333333;
+
+    class MiniSOC_Boundary boundaryStyle;
+    class Lab_Environment,Monitored_Branches,Sites_Layer,Site_HQ,Site_SF,Site_DMZ,Central_Layer,Central_Sides,Management_Layer,Legend groupStyle;

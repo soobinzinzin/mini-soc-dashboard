@@ -1,0 +1,174 @@
+=============================================================================
+BIEN BAN KIEM TRA DOI CHIEU KIEN TRUC C4 VA ERD (BAN DONG GOI CUOI CUNG)
+Thoi gian thuc hien: 2026-10-11 23:50:00 +07:00
+Du an: Mini-SOC Incident Management Lab
+Nguoi kiem tra: Antigravity Agent (phien lam viec hien tai)
+=============================================================================
+
+1. DANH SACH TAP TIN VA MA BAM SHA-256
+-----------------------------------------------------------------------------
+Danh sach toan bo tap tin kien truc, so do nguon, anh xuat va tai lieu PDF:
+
+Tep nguon Mermaid (.mmd):
+e5d45e8652f8825d8942ac47317cd2c736e9b7d08b60c252e6c2fc7ff97545a0  c1-system-context.mmd (3,025 bytes)
+24310ad411b7b8e2fbdb03850348cae097bba8e92ec8b5a85d9ac774c20cc5e1  c2-container.mmd (4,876 bytes)
+aae91b85e0f93ee8075e692046ca8b06f4850b72731d9d9e976ffa4cd2cc3652  c3-soc-central.mmd (5,298 bytes)
+d647ad1b1f8f62e7e0cd84f781cb1393d376f0dbfc9ab552e29defe00443f93a  erd.mmd (3,368 bytes)
+
+Tep anh do hoa (.png):
+befb6a3b189cbc7f33cf966a552b56f4c91d7862a89d4721443c6971ca9c1f5e  c1-system-context.png (483,010 bytes, 3136x3892 px)
+09bc1829d58d8eb11edc66a96fa35487a3c463d2540ded6053264fd291e43079  c2-container.png (944,039 bytes, 3136x7788 px)
+13e512a08c2862400ff1642515605c32134cd84664a9469a885299ef590bbff1  c3-soc-central.png (846,047 bytes, 3136x7976 px)
+1ac23d569c5bbfa86448487b403808660e32532f67540bdf0c575abdac9601e3  erd.png (504,073 bytes, 3136x4412 px)
+
+Tep anh vector (.svg):
+6eb060386effac146d40636f2c3b695b87ff832299f698cac980f11f32b3de30  c1-system-context.svg (343,092 bytes)
+6ab6dca96149203d2b238eb1fb38a0f465a2bbd8d6c8bc769db991ace2601d90  c2-container.svg (333,441 bytes)
+219ed967d845e35606422a632f82f30e2e3aee9c5562f56925c84d65b34569f1  c3-soc-central.svg (240,866 bytes)
+e03250772c226da6cdd69365198c570c54878f1ec5c7bc9cc44bdaf41328dc3b  erd.svg (303,241 bytes)
+
+Tep tai lieu PDF hoan chinh:
+7e93fecac9d4f83e67c25b910d29f7c60b80d421ba50e97dd3ec7ae6d4654dd3  submit/MiniSOC_C4_ERD.pdf (2,278,172 bytes, 3 trang A4 Portrait)
+7f3b6d333fcaa68f1d2768fd3d2d09e5a643bfa071be34b4d282ffc2dbdab9f0  extra/MiniSOC_C3_Component.pdf (1,345,757 bytes, 1 trang A4 Portrait)
+
+Anh render kiem tra truc quan tung trang PDF (150 DPI):
+b11475be2ea3d66aa10a043fca4b3eb15beec4c9d57fbb36a0751e4bcd38c58d  render/page_1.png (264,805 bytes, 1241x1754 px)
+a832a008c14fae8c30ad9b46656f077a72517df83617b83334997d8791723f52  render/page_2.png (222,872 bytes, 1241x1754 px)
+7f28a029b947d12a756636d8fb5bd2bf9feacdbda76b7f01ff1bb96a44b9bdb6  render/page_3.png (269,532 bytes, 1241x1754 px)
+966afd9e599cd110d24d3285f5afdaec73cec263a8c46fe3c95700836a3b6189  render/page_c3.png (216,350 bytes, 1241x1754 px)
+
+
+2. THONG SO DO PHAN GIAI CAC TEP PNG
+-----------------------------------------------------------------------------
+Phuong phap xac dinh: Doc truc tiep byte header IHDR bang Python struct.unpack.
+
+c1-system-context.png: 3136 x 3892 px (chieu rong dat 3136 px >= 3000 px)
+c2-container.png:      3136 x 7788 px (chieu rong dat 3136 px >= 3000 px)
+c3-soc-central.png:    3136 x 7976 px (chieu rong dat 3136 px >= 3000 px)
+erd.png:               3136 x 4412 px (chieu rong dat 3136 px >= 3000 px)
+
+Kich thuoc trang PDF render (150 DPI):
+render/page_1.png:     1241 x 1754 px (A4 Portrait)
+render/page_2.png:     1241 x 1754 px (A4 Portrait)
+render/page_3.png:     1241 x 1754 px (A4 Portrait)
+render/page_c3.png:    1241 x 1754 px (A4 Portrait)
+
+
+3. KET QUA KIEM TRA TRUC QUAN TUNG HINH (VIEW_FILE XAC NHAN)
+-----------------------------------------------------------------------------
+Nguoi kiem tra da mo va xem truc tiep tung tep trong phien lam viec hien tai:
+
+[PASS] docs/diagrams/render/page_1.png (C1 System Context)
+- Mui ten tan cong tro thang vao nhom May chu chi nhanh duoc giam sat (lab).
+- Nhan tan cong: "Tan cong SYN scan / ICMP flood / SSH brute force [TCP/ICMP]".
+- Mui ten tan cong khong tro vao khoi Mini-SOC.
+- Khoi Mini-SOC duoc bao quanh boi vien net dut Ranh gioi He thong Mini-SOC.
+- Co mui ten giam sat promiscuous net dut tu Mini-SOC sang may chu chi nhanh.
+- Telegram Bot API nam ben ngoai, nhan "Gui canh bao critical/high [HTTPS] (dang tich hop)".
+- Quan tri vien truy cap bang dieu khien qua "HTTP GET polling 5s".
+- Chu giai (Legend) day du 3 loai thuc the o goc tren ben trai.
+- Tieu de va chu thich tieng Viet hien thi bang phong Arial Unicode chuan xac.
+
+[PASS] docs/diagrams/render/page_2.png (C2 Container Diagram)
+- Bo cuc 4 tang doc ro ret tren kho giay A4 Portrait:
+  + Tang 1: attacker o giua, 3 victim nam ngay ben duoi trong nhom May chu chi nhanh duoc giam sat (lab), to xam, nam ngoai ranh gioi Mini-SOC.
+  + Tang 2: 3 site (HQ, Server Farm, DMZ) xep ngang. Moi site gom sensor va agent noi voi nhau bang bind mount. 3 victim noi xuong 3 sensor tuong ung bang mui ten net dut "Bat goi promiscuous" ngan va thang.
+  + Tang 3: soc-central o giua tren, soc-postgres ben trai duoi, soc-dashboard ben phai duoi. Co mui ten SQL hai chieu va HTTP GET 5s.
+  + Tang 4: Telegram Bot API va Quan tri vien / SOC Analyst nam ben duoi, ngoai ranh gioi.
+- Ranh gioi net dut Ranh gioi He thong Mini-SOC bao tron dung 9 container noi bo phong thu (6 container thuoc Tang 2 va 3 container thuoc Tang 3).
+- 4 container lab (attacker va 3 victim) nam ngoai ranh gioi.
+- Dung 3 nhan tan cong: SYN Port Scan, ICMP Flood, SSH Brute Force.
+- Chu giai (Legend) gom 5 loai thuc the dat o goc tren ben trai, gon gang.
+- Co chu trong so do doc duoc ro rang, phong 30px giup cac nhan khong bi nho khi in tren kho A4 doc.
+- Tieu de va chan trang phong Arial Unicode hoan toan khong loi ky tu.
+
+[PASS] docs/diagrams/render/page_3.png (ERD Database Schema)
+- Hien thi dung 5 bang du lieu thuc te tu db/init.sql: sensors, raw_alerts, incidents, notifications, admin_users.
+- Khong co thuc the gia dang tieu de (title entity) hoac ghi chu render thanh bang ao.
+- Moi quan he giua raw_alerts va incidents the hien bang duong net dut tuong quan logic (site, sid, src_ip).
+- Moi quan he khoa ngoai thuc te (sensors -> raw_alerts, incidents -> notifications) the hien bang net lien.
+- Bang admin_users dung doc lap, khong co khoa ngoai lien ket bang khac.
+- Cac kieu du lieu uuid, text, int, inet, timestamptz, bigserial, bigint the hien day du va ro net.
+
+[PASS] docs/diagrams/render/page_c3.png (C3 Component Diagram)
+- Khoi phan ra container soc-central (Python 3.11 / FastAPI).
+- Correlation Engine dieu phoi doc lap sang hai huong:
+  + Sang Notifier: "Gui canh bao critical/high [Daemon Thread / Async Dispatch]".
+  + Sang Notification Log: "Ghi ket qua gui sent/failed [Python Call]".
+- Notifier va Notification Log hoan toan tach roi, khong co mui ten noi giua hai module nay.
+- Co day du khoi Chu giai (Legend) o goc tren ben trai.
+
+
+4. DOI CHIEU SO TRANG VA DINH DANG TAP TIN PDF
+-----------------------------------------------------------------------------
+Lenh kiem tra: PyMuPDF doc.page_count va page.rect.
+
+Tep docs/diagrams/submit/MiniSOC_C4_ERD.pdf:
+- So trang: Dung 3 trang A4 Portrait (595.32 x 841.92 pt).
+- Trang 1: C1 System Context Diagram.
+- Trang 2: C2 Container Diagram (bo cuc 4 tang doc).
+- Trang 3: ERD Database Schema.
+- Dung luong: 2,278,172 bytes (~2.28 MB), ap dung che do nen lossless deflate giup giam tai dung luong.
+- Kiem tra truc quan: Chieu cao can doi, tieu de va chu thich tieng Viet bang phong Arial he thong sac net.
+
+Tep docs/diagrams/extra/MiniSOC_C3_Component.pdf:
+- So trang: 1 trang A4 Portrait (595.32 x 841.92 pt).
+- Trang 1: C3 Component Diagram.
+- Dung luong: 1,345,757 bytes (~1.35 MB).
+
+
+5. PHAN TICH DOI CHIEU CONTAINER C2 VOI DOCKER-COMPOSE.YML
+-----------------------------------------------------------------------------
+Tong so container trong docker-compose.yml: 13 container.
+Tong so container the hien tren C2: 13 container. Ty le khop 100%.
+
+Phan bo chi tiet:
+A. Ben trong Ranh gioi He thong Mini-SOC (9 container phong thu):
+   1. sensor-hq [Snort 2.9]
+   2. agent-hq [Python agent]
+   3. sensor-serverfarm [Snort 2.9]
+   4. agent-serverfarm [Python agent]
+   5. sensor-dmz [Snort 2.9]
+   6. agent-dmz [Python agent]
+   7. soc-central [Python 3.11 / FastAPI]
+   8. soc-postgres [PostgreSQL 15]
+   9. soc-dashboard [React + Vite / nginx]
+
+B. Ben ngoai Ranh gioi He thong Mini-SOC (4 container moi truong lab):
+   10. attacker [Kali Linux, nmap/hydra/ping]
+   11. victim-hq [Ubuntu victim, SSH/HTTP]
+   12. victim-serverfarm [Ubuntu victim, SSH/HTTP]
+   13. victim-dmz [Ubuntu victim, SSH/HTTP]
+
+C. Thuc the ngoai khong phai container (2 thuc the):
+   - Quan tri vien / SOC Analyst [Person]
+   - Telegram Bot API [External Service]
+
+
+6. DOI CHIEU BANG ERD VOI DB/INIT.SQL
+-----------------------------------------------------------------------------
+So luong bang dinh nghia trong db/init.sql: 5 bang.
+So luong bang the hien tren erd.mmd: 5 bang. Ty le khop 100%.
+
+1. sensors (dong 7 db/init.sql):
+   - Cot: sensor_id (PK), site, first_seen, last_seen
+2. raw_alerts (dong 15 db/init.sql):
+   - Cot: telemetry_id (PK), sensor_id (FK), site, gid, sid, rev, signature, priority, protocol, src_ip, src_port, dst_ip, dst_port, raw_log, alert_timestamp, received_at
+3. incidents (dong 39 db/init.sql):
+   - Cot: id (PK), site, sid, src_ip, severity, alert_count, first_alert_at, last_alert_at, status, created_at
+4. notifications (dong 57 db/init.sql):
+   - Cot: id (PK), incident_id (FK), channel, sent_at, status
+5. admin_users (dong 66 db/init.sql):
+   - Cot: id (PK), username (UNIQUE), password_hash, created_at
+
+
+7. KIEM TRA MA NGUON C3 (DISPATCH VA DOC LAP MODULE)
+-----------------------------------------------------------------------------
+- Kiem tra central/correlation.py:
+  + Dong 88: threading.Thread(target=asyncio.run, args=(_send_incident_notification(incident_data),))
+  + Dong 84: loop.create_task(_send_incident_notification(incident_data))
+  + Nhan mui ten 7 the hien chinh xac co che: [Daemon Thread / Async Dispatch].
+- Kiem tra central/notifier.py:
+  + Khong import notifications_db.py.
+  + Correlation Engine thuc hien goi ca send_telegram_message va insert_notification doc lap.
+=============================================================================
