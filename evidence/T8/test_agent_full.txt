@@ -1,5 +1,5 @@
 === Output kiem thu day du test_agent.py (10 test cases) ===
-Lenh chay: docker run --rm -v C:\Users\taiph\mini-soc-lab-v2\agent:/app -w /app python:3.11-slim python test_agent.py
+Lenh chay: docker run --rm -v mini-soc-lab-v2/agent:/app -w /app python:3.11-slim python test_agent.py
 
 Output:
 2026-09-28 03:11:57 [WARNING] [ShipperAgent] Could not parse alert line: random unformatted log text

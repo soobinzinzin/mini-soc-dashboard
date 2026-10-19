@@ -1,0 +1,188 @@
+=== 1. DOCKER COMPOSE PS (13/13 CONTAINERS) ===
+NAME                IMAGE                                                                     COMMAND                  SERVICE             CREATED              STATUS                        PORTS
+agent-dmz           sha256:d898fe42d3c95453da30f39b02a8fe3001ff1a70030c050b9e549100397b923e   "python agent.py"        agent-dmz           5 days ago           Up About a minute             
+agent-hq            sha256:cfdb806c115e3a227436aaade4315f5582f7868acca898855d12d180a5f3c2f4   "python agent.py"        agent-hq            5 days ago           Up About a minute             
+agent-serverfarm    sha256:26ba3a4b7e9f2476865fef0ade858facd696c20a86e15edcde83bd8d7b0807e0   "python agent.py"        agent-serverfarm    5 days ago           Up About a minute             
+attacker            sha256:9194443c0afc5c9070380faab9f37ee96f822eb8fa27357cbab58704300481ba   "sleep infinity"         attacker            3 days ago           Up About a minute             
+sensor-dmz          sha256:e6fe4c6aa81a3d6ea8eb0e28e82d61607971b5f362e49b660723f88100d22ff1   "snort -q -k none -c…"   sensor-dmz          5 days ago           Up About a minute             
+sensor-hq           sha256:a668b957f2dcec34a5d18703bb36e55f22e8947dd10b9d4badf2c738e183b18d   "snort -q -k none -c…"   sensor-hq           5 days ago           Up About a minute             
+sensor-serverfarm   sha256:6fee6f5e206613eccd359fa292a37ac152d7d8bdaaeacc38b42b5fe215f9f5b7   "snort -q -k none -c…"   sensor-serverfarm   5 days ago           Up About a minute             
+soc-central         mini-soc-lab-v2-soc-central                                               "uvicorn main:app --…"   soc-central         About a minute ago   Up About a minute             127.0.0.1:8000->8000/tcp
+soc-dashboard       sha256:dc36466a219eb54ceddfe637ae896b8121266b3f81c5909f0ea86bec1a5c9c7a   "/docker-entrypoint.…"   soc-dashboard       3 days ago           Up About a minute             0.0.0.0:5173->80/tcp, [::]:5173->80/tcp
+soc-postgres        postgres:15-alpine                                                        "docker-entrypoint.s…"   postgres            5 days ago           Up About a minute (healthy)   5432/tcp
+victim-dmz          sha256:6242550e51f784fba42e17505a26f3142d63d3d5e4a92578c99757480cff80f1   "/bin/sh -c 'service…"   victim-dmz          5 days ago           Up About a minute             22/tcp, 80/tcp
+victim-hq           sha256:6d71166ea77f6f4e64b8cd6dd3dcf7ee3e9c8f50a91999312bb8a88be9fb1bc6   "/bin/sh -c 'service…"   victim-hq           5 days ago           Up About a minute             22/tcp, 80/tcp
+victim-serverfarm   sha256:e9b0c6b34e519acdf56f47a930d9f20605e6dd4ceba2235a66d146464bba36c1   "/bin/sh -c 'service…"   victim-serverfarm   5 days ago           Up About a minute             22/tcp, 80/tcp
+
+
+=== 2. DOCKER LOGS SOC-CENTRAL ===
+INFO:     172.21.0.1:38648 - "GET /health HTTP/1.1" 200 OK
+
+
+=== 3. HEALTH CHECK (curl http://localhost:8000/health) ===
+{"status":"healthy","service":"ingestion-api","database":"ok","timestamp":"2026-10-08T02:13:09.846023Z"}
+
+=== 4. TEST AGENT (agent/test_agent.py - 11 tests) ===
+.2026-10-08 09:13:09 [WARNING] [ShipperAgent] Could not parse alert line: random unformatted log text
+.....2026-10-08 09:13:09 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-10-08 09:13:09 [INFO] [ShipperAgent] Monitoring file: C:\Users\<user>\AppData\Local\Temp\tmpwp6ivcpy
+2026-10-08 09:13:09 [INFO] [ShipperAgent] Target Ingestion URL: http://mock-api/telemetry
+2026-10-08 09:13:09 [INFO] [ShipperAgent] Found alert file: C:\Users\<user>\AppData\Local\Temp\tmpwp6ivcpy. Attaching tail stream.
+2026-10-08 09:13:10 [INFO] [ShipperAgent] Alert file rotated or truncated. Re-opening...
+C:\Users\<user>\AppData\Local\Programs\Python\Python312\Lib\threading.py:1012: ResourceWarning: unclosed file <_io.TextIOWrapper name='C:\\Users\\<user>\\AppData\\Local\\Temp\\tmpwp6ivcpy' mode='r' encoding='utf-8'>
+  self._target(*self._args, **self._kwargs)
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+.2026-10-08 09:13:10 [ERROR] [ShipperAgent] HTTP 422 Client Error (Unprocessable Entity). Dropping alert. Raw log: test raw log line
+2026-10-08 09:13:10 [WARNING] [ShipperAgent] Alert dropped for SID 1000001 due to client error (HTTP 4xx).
+.2026-10-08 09:13:10 [WARNING] [ShipperAgent] HTTP 500 Server Error (Internal Server Error). Will retry.
+2026-10-08 09:13:10 [WARNING] [ShipperAgent] Delivery failed for SID 1000002. Retrying in 0.0s...
+2026-10-08 09:13:10 [INFO] [ShipperAgent] Forwarded alert [SID:1000002] 'Test Scan' from 10.0.0.1 to 10.0.0.2
+.2026-10-08 09:13:10 [INFO] [ShipperAgent] Starting Shipper Agent for [sensor-hq] (Site: hq)
+2026-10-08 09:13:10 [INFO] [ShipperAgent] Monitoring file: C:\Users\<user>\AppData\Local\Temp\tmp_b30zh08
+2026-10-08 09:13:10 [INFO] [ShipperAgent] Target Ingestion URL: http://mock-api/telemetry
+2026-10-08 09:13:10 [INFO] [ShipperAgent] Found alert file: C:\Users\<user>\AppData\Local\Temp\tmp_b30zh08. Attaching tail stream.
+..
+----------------------------------------------------------------------
+Ran 11 tests in 0.327s
+
+OK
+
+
+=== 5. TEST DB (test_db.py - 8 tests) ===
+2026-10-08 02:13:10 [WARNING] [IngestionAPI] CORS allow_origins is set to wildcard '*' for development/lab. WARNING: Wildcard origin cannot be used with credentials/cookies when real authentication is implemented.
+2026-10-08 02:13:10 [INFO] [IngestionAPI] Initialized SQLite database at :memory:
+test_01_check_connection (__main__.TestCentralDatabase.test_01_check_connection)
+Verify check_connection returns True for healthy database. ... ok
+test_02_upsert_sensor (__main__.TestCentralDatabase.test_02_upsert_sensor)
+Verify upsert_sensor inserts new sensor and updates last_seen on conflict. ... ok
+test_03_insert_raw_alert_and_query (__main__.TestCentralDatabase.test_03_insert_raw_alert_and_query)
+Verify inserting 1 alert and querying it back preserves all fields. ... ok
+test_04_duplicate_telemetry_id_not_inserted (__main__.TestCentralDatabase.test_04_duplicate_telemetry_id_not_inserted)
+Verify inserting duplicate telemetry_id does NOT increase row count (idempotence). ... ok
+test_05_stats_aggregation (__main__.TestCentralDatabase.test_05_stats_aggregation)
+Verify get_stats computes total_received, by_site, by_signature, and by_protocol. ... ok
+test_06_truncate_raw_alerts (__main__.TestCentralDatabase.test_06_truncate_raw_alerts)
+Verify truncate_raw_alerts clears all alerts and returns count. ... ok
+test_07_main_api_flow (__main__.TestCentralDatabase.test_07_main_api_flow)
+Verify main.py endpoints: health_check, ingest_telemetry, list_telemetry, clear_telemetry. ... 2026-10-08 02:13:10 [INFO] [IngestionAPI] INGESTED TELEMETRY [HQ] - SID:1000002 'TCP SYN Port Scan Detected' | TCP 172.22.0.2:44343 -> 172.22.0.3:11
+2026-10-08 02:13:10 [ERROR] [IngestionAPI] Correlation error for alert [hq/1000002]: no such table: incidents
+2026-10-08 02:13:10 [WARNING] [IngestionAPI] DANGEROUS OPERATION: Truncating raw_alerts table via DELETE /api/v1/telemetry
+2026-10-08 02:13:10 [INFO] [IngestionAPI] Cleared 1 telemetry records from PostgreSQL.
+ok
+test_08_ingest_telemetry_deduplication_same_telemetry_id (__main__.TestCentralDatabase.test_08_ingest_telemetry_deduplication_same_telemetry_id)
+Verify calling ingest_telemetry twice with identical telemetry_id results in exactly 1 row in raw_alerts. ... 2026-10-08 02:13:10 [INFO] [IngestionAPI] INGESTED TELEMETRY [HQ] - SID:1000001 'ICMP Flood Attack Detected' | ICMP 172.22.0.2:* -> 172.22.0.3:*
+2026-10-08 02:13:10 [ERROR] [IngestionAPI] Correlation error for alert [hq/1000001]: no such table: incidents
+2026-10-08 02:13:10 [WARNING] [IngestionAPI] Duplicate alert skipped: telemetry_id=test-dedup-uuid-12345
+ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.004s
+
+OK
+
+
+=== 6. TEST CORRELATION (test_correlation.py - 16 tests) ===
+INFO:IngestionAPI.DB:Initialized SQLite database at :memory:
+test_already_closed_not_affected (__main__.TestCloseStaleIncidents.test_already_closed_not_affected)
+An already-closed incident should not be re-closed or affected. ... ok
+test_close_stale_after_window (__main__.TestCloseStaleIncidents.test_close_stale_after_window)
+Create an incident with last_alert_at in the past (> 10 seconds ago). ... INFO:IngestionAPI.Correlation:Closed 1 stale incident(s).
+ok
+test_recent_incident_stays_open (__main__.TestCloseStaleIncidents.test_recent_incident_stays_open)
+An incident with last_alert_at within the last 10 seconds ... ok
+INFO:IngestionAPI.DB:Initialized SQLite database at :memory:
+test_different_site_creates_separate_incidents (__main__.TestCorrelation.test_different_site_creates_separate_incidents)
+Alerts with same (sid, src_ip) but different site within 10s ... INFO:IngestionAPI.Correlation:NEW incident #1 created [hq/1000002/10.0.0.1] severity=high
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:IngestionAPI.Correlation:NEW incident #2 created [dmz/1000002/10.0.0.1] severity=high
+DEBUG:asyncio:Using selector: EpollSelector
+ok
+test_different_src_ip_creates_separate_incidents (__main__.TestCorrelation.test_different_src_ip_creates_separate_incidents)
+Alerts with same (site, sid) but different src_ip within 10s ... INFO:IngestionAPI.Correlation:NEW incident #3 created [hq/1000002/10.0.0.1] severity=high
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:IngestionAPI.Correlation:NEW incident #4 created [hq/1000002/10.0.0.2] severity=high
+DEBUG:asyncio:Using selector: EpollSelector
+ok
+test_icmp_flood_severity (__main__.TestCorrelation.test_icmp_flood_severity)
+SID 1000001 should map to 'medium'. ... INFO:IngestionAPI.Correlation:NEW incident #5 created [hq/1000001/10.0.0.1] severity=medium
+ok
+test_sliding_window_extends (__main__.TestCorrelation.test_sliding_window_extends)
+Sliding window: a1 at T+0, a2 at T+8, a3 at T+16. ... INFO:IngestionAPI.Correlation:NEW incident #6 created [hq/1000002/10.0.0.1] severity=high
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:IngestionAPI.Correlation:CORRELATED alert into incident #6 [hq/1000002] alert_count=2
+INFO:IngestionAPI.Correlation:CORRELATED alert into incident #6 [hq/1000002] alert_count=3
+ok
+test_ssh_brute_force_severity (__main__.TestCorrelation.test_ssh_brute_force_severity)
+SID 1000003 should map to 'critical'. ... INFO:IngestionAPI.Correlation:NEW incident #7 created [hq/1000003/10.0.0.1] severity=critical
+DEBUG:asyncio:Using selector: EpollSelector
+ok
+test_three_alerts_within_10s_create_one_incident (__main__.TestCorrelation.test_three_alerts_within_10s_create_one_incident)
+3 alerts with same (site, sid, src_ip) within 10 seconds ... INFO:IngestionAPI.Correlation:NEW incident #8 created [hq/1000002/10.0.0.1] severity=high
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:IngestionAPI.Correlation:CORRELATED alert into incident #8 [hq/1000002] alert_count=2
+INFO:IngestionAPI.Correlation:CORRELATED alert into incident #8 [hq/1000002] alert_count=3
+ok
+test_two_alerts_more_than_10s_apart_create_two_incidents (__main__.TestCorrelation.test_two_alerts_more_than_10s_apart_create_two_incidents)
+2 alerts with same (site, sid, src_ip) but more than 10 seconds apart ... INFO:IngestionAPI.Correlation:NEW incident #9 created [hq/1000002/10.0.0.1] severity=high
+DEBUG:asyncio:Using selector: EpollSelector
+INFO:IngestionAPI.Correlation:NEW incident #10 created [hq/1000002/10.0.0.1] severity=high
+DEBUG:asyncio:Using selector: EpollSelector
+ok
+test_unknown_sid_gets_low_severity (__main__.TestCorrelation.test_unknown_sid_gets_low_severity)
+Alert with SID not in SEVERITY_MAP should create incident with severity='low'. ... ok
+test_icmp_flood_is_medium (__main__.TestGetSeverity.test_icmp_flood_is_medium) ... ok
+test_ssh_brute_force_is_critical (__main__.TestGetSeverity.test_ssh_brute_force_is_critical) ... ok
+test_syn_scan_is_high (__main__.TestGetSeverity.test_syn_scan_is_high) ... ok
+test_unknown_sid_is_low_with_warning (__main__.TestGetSeverity.test_unknown_sid_is_low_with_warning) ... ok
+INFO:IngestionAPI.DB:Initialized SQLite database at :memory:
+test_stats_counts_correctly (__main__.TestIncidentStats.test_stats_counts_correctly)
+Verify stats counts by severity and status. ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.040s
+
+OK
+
+
+=== 7. TEST NOTIFIER & NON-BLOCKING (test_notifier.py - 18 tests) ===
+test_existing_critical_incident_update_does_not_trigger_notification (__main__.TestCorrelationNotifierIntegration.test_existing_critical_incident_update_does_not_trigger_notification)
+Incident CŨ tăng alert_count (không phải mới tạo) dù severity critical ... ok
+test_new_critical_incident_triggers_notification_and_records_sent (__main__.TestCorrelationNotifierIntegration.test_new_critical_incident_triggers_notification_and_records_sent)
+Incident mới severity='critical' -> notifier được gọi. Mock trả 200 -> insert_notification 'sent'. ... ok
+test_new_high_incident_triggers_notification (__main__.TestCorrelationNotifierIntegration.test_new_high_incident_triggers_notification)
+Incident mới severity='high' -> notifier được gọi. ... ok
+test_new_medium_incident_does_not_trigger_notification (__main__.TestCorrelationNotifierIntegration.test_new_medium_incident_does_not_trigger_notification)
+Incident severity='medium' -> notifier KHÔNG được gọi (tránh spam). ... ok
+test_send_failure_records_failed_status (__main__.TestCorrelationNotifierIntegration.test_send_failure_records_failed_status)
+Mock gửi thất bại (ví dụ 400 hoặc lỗi mạng) -> insert_notification với status='failed'. ... ok
+test_attack_name_mapping (__main__.TestMessageFormatting.test_attack_name_mapping) ... ok
+test_format_critical_incident_message (__main__.TestMessageFormatting.test_format_critical_incident_message) ... ok
+test_format_high_incident_message (__main__.TestMessageFormatting.test_format_high_incident_message) ... ok
+test_vietnam_time_formatting (__main__.TestMessageFormatting.test_vietnam_time_formatting) ... ok
+test_trigger_returns_immediately_on_failure (__main__.TestNonBlockingTrigger.test_trigger_returns_immediately_on_failure)
+Mock gửi thất bại sau 2 giây (retry timeout). _trigger_telegram_notification ... ok
+test_trigger_returns_immediately_on_success (__main__.TestNonBlockingTrigger.test_trigger_returns_immediately_on_success)
+Mock gửi thành công sau 2 giây. _trigger_telegram_notification phải trả về ... ok
+test_insert_notification_failed_has_null_sent_at (__main__.TestNotificationsDB.test_insert_notification_failed_has_null_sent_at) ... ok
+test_insert_notification_sent_has_sent_at (__main__.TestNotificationsDB.test_insert_notification_sent_has_sent_at) ... ok
+test_400_no_retry_returns_false (__main__.TestTelegramNotifierUnit.test_400_no_retry_returns_false)
+Mock trả 400 -> không retry, trả False ngay. ... Telegram API 4xx error (HTTP 400): {"ok": false, "description": "Bad Request: chat not found"}. Not retrying.
+ok
+test_500_retry_then_200_returns_true (__main__.TestTelegramNotifierUnit.test_500_retry_then_200_returns_true)
+Mock trả 500 rồi 200 ở lần retry thứ 2 -> cuối cùng trả True. ... Telegram API 5xx server error (HTTP 500) on attempt 1/3.
+ok
+test_missing_chat_id_returns_false_and_no_httpx_call (__main__.TestTelegramNotifierUnit.test_missing_chat_id_returns_false_and_no_httpx_call)
+Thiếu TELEGRAM_CHAT_ID -> không gọi httpx, trả False. ... Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing.
+ok
+test_missing_token_returns_false_and_no_httpx_call (__main__.TestTelegramNotifierUnit.test_missing_token_returns_false_and_no_httpx_call)
+Thiếu TELEGRAM_BOT_TOKEN -> không gọi httpx, trả False. ... Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing.
+ok
+test_send_success_returns_true (__main__.TestTelegramNotifierUnit.test_send_success_returns_true)
+Gửi thành công (mock trả 200) -> trả True. ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 6.476s
+
+OK
+
+

@@ -1,0 +1,1 @@
+Non-blocking verification: _trigger_telegram_notification returned in 0.000 ms while mock send took 2000 ms.

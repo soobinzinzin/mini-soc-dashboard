@@ -1,0 +1,36 @@
+
+test_existing_critical_incident_update_does_not_trigger_notification (__main__.TestCorrelationNotifierIntegration.test_existing_critical_incident_update_does_not_trigger_notification)
+Incident C\u0168 t�ng alert_count (kh�ng ph\u1ea3i m\u1edbi t\u1ea1o) d� severity critical ... ok
+test_new_critical_incident_triggers_notification_and_records_sent (__main__.TestCorrelationNotifierIntegration.test_new_critical_incident_triggers_notification_and_records_sent)
+Incident m\u1edbi severity='critical' -> notifier ��\u1ee3c g\u1ecdi. Mock tr\u1ea3 200 -> insert_notification 'sent'. ... ok
+test_new_high_incident_triggers_notification (__main__.TestCorrelationNotifierIntegration.test_new_high_incident_triggers_notification)
+Incident m\u1edbi severity='high' -> notifier ��\u1ee3c g\u1ecdi. ... ok
+test_new_medium_incident_does_not_trigger_notification (__main__.TestCorrelationNotifierIntegration.test_new_medium_incident_does_not_trigger_notification)
+Incident severity='medium' -> notifier KH�NG ��\u1ee3c g\u1ecdi (tr�nh spam). ... ok
+test_send_failure_records_failed_status (__main__.TestCorrelationNotifierIntegration.test_send_failure_records_failed_status)
+Mock g\u1eedi th\u1ea5t b\u1ea1i (v� d\u1ee5 400 ho\u1eb7c l\u1ed7i m\u1ea1ng) -> insert_notification v\u1edbi status='failed'. ... ok
+test_attack_name_mapping (__main__.TestMessageFormatting.test_attack_name_mapping) ... ok
+test_format_critical_incident_message (__main__.TestMessageFormatting.test_format_critical_incident_message) ... ok
+test_format_high_incident_message (__main__.TestMessageFormatting.test_format_high_incident_message) ... ok
+test_vietnam_time_formatting (__main__.TestMessageFormatting.test_vietnam_time_formatting) ... ok
+test_insert_notification_failed_has_null_sent_at (__main__.TestNotificationsDB.test_insert_notification_failed_has_null_sent_at) ... ok
+test_insert_notification_sent_has_sent_at (__main__.TestNotificationsDB.test_insert_notification_sent_has_sent_at) ... ok
+test_400_no_retry_returns_false (__main__.TestTelegramNotifierUnit.test_400_no_retry_returns_false)
+Mock tr\u1ea3 400 -> kh�ng retry, tr\u1ea3 False ngay. ... Telegram API 4xx error (HTTP 400): {"ok": false, "description": "Bad Request: chat not found"}. Not retrying.
+ok
+test_500_retry_then_200_returns_true (__main__.TestTelegramNotifierUnit.test_500_retry_then_200_returns_true)
+Mock tr\u1ea3 500 r\u1ed3i 200 \u1edf l\u1ea7n retry th\u1ee9 2 -> cu\u1ed1i c�ng tr\u1ea3 True. ... Telegram API 5xx server error (HTTP 500) on attempt 1/3.
+ok
+test_missing_chat_id_returns_false_and_no_httpx_call (__main__.TestTelegramNotifierUnit.test_missing_chat_id_returns_false_and_no_httpx_call)
+Thi\u1ebfu TELEGRAM_CHAT_ID -> kh�ng g\u1ecdi httpx, tr\u1ea3 False. ... Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing.
+ok
+test_missing_token_returns_false_and_no_httpx_call (__main__.TestTelegramNotifierUnit.test_missing_token_returns_false_and_no_httpx_call)
+Thi\u1ebfu TELEGRAM_BOT_TOKEN -> kh�ng g\u1ecdi httpx, tr\u1ea3 False. ... Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID is missing.
+ok
+test_send_success_returns_true (__main__.TestTelegramNotifierUnit.test_send_success_returns_true)
+G\u1eedi th�nh c�ng (mock tr\u1ea3 200) -> tr\u1ea3 True. ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.035s
+
+OK
